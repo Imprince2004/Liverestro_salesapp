@@ -504,6 +504,7 @@ exports.createUser = async (req, res) => {
       email: cleanEmail,
       phone: cleanPhone,
       password_hash: passwordHash,
+      role: role,
       manager_id: role === 'SALES_MANAGER' ? null : (req.user && req.user.role === 'SALES_MANAGER' ? req.user.id : managerId || 'usr_companyadmin_002'),
       employee_id: employeeId,
       date_of_joining: dateOfJoining,

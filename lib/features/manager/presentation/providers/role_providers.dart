@@ -73,10 +73,13 @@ class TeamMembersNotifier extends StateNotifier<List<TeamMemberModel>> {
 
   static final Dio _directDio = Dio(
     BaseOptions(
-      connectTimeout: const Duration(milliseconds: 3000),
-      receiveTimeout: const Duration(milliseconds: 4000),
-      sendTimeout: const Duration(milliseconds: 4000),
-      headers: {'Content-Type': 'application/json'},
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      sendTimeout: const Duration(seconds: 20),
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
     ),
   );
 
