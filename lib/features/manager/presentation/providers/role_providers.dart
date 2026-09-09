@@ -573,32 +573,37 @@ final auditLogsProvider = StateNotifierProvider<AuditLogsNotifier, List<AuditLog
 
 /// Available territories / areas fetched dynamically from database
 final availableTerritoriesProvider = FutureProvider.autoDispose<List<String>>((ref) async {
-  try {
-    final dio = Dio();
-    for (final base in Environment.resolvedApiCandidates) {
-      try {
-        final res = await dio.get(
-          '$base/api/users/territories',
-          options: Options(
-            extra: {'skip_retry': true},
-            sendTimeout: const Duration(milliseconds: 1500),
-            receiveTimeout: const Duration(milliseconds: 2000),
-          ),
-        );
-        if (res.statusCode == 200 && res.data != null && res.data['data'] is List) {
-          final list = (res.data['data'] as List).map((e) => e.toString()).toList();
-          if (list.isNotEmpty) return list;
-        }
-      } catch (_) {}
-    }
-  } catch (_) {}
-  return [
+  const defaultTerritories = [
     'Ahmedabad North (Gota & Jagatpur)',
     'Ahmedabad North (SG Highway & Chandlodiya)',
     'Ahmedabad West (Sindhubhavan & Bodakdev)',
     'Ahmedabad West (Bopal & Shela)',
     'Ahmedabad Central (Navrangpura & CG Road)',
     'Ahmedabad East (Nikol & Vastral)',
-    'Gujarat Headquarters',
+    'Gujarat Headquarters'
   ];
+
+  try {
+    final dio = Dio();
+    final targetUrl = Environment.activeWorkingBaseUrl ?? Environment.baseUrl;
+    final res = await dio.get(
+      '$targetUrl/api/users/territories',
+      options: Options(
+        extra: {'skip_retry': true},
+        sendTimeout: const Duration(milliseconds: 1200),
+        receiveTimeout: const Duration(milliseconds: 1500),
+        headers: {'ngrok-skip-browser-warning': 'true'},
+      ),
+    );
+
+    if (res.statusCode == 200 && res.data != null && res.data['data'] is List) {
+      final list = (res.data['data'] as List).map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+      if (list.isNotEmpty) {
+        final combined = {...defaultTerritories, ...list}.toList();
+        return combined;
+      }
+    }
+  } catch (_) {}
+
+  return defaultTerritories;
 });

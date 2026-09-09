@@ -381,48 +381,52 @@ class _RegisterExecutiveModalState extends ConsumerState<RegisterExecutiveModal>
                     validator: (v) => (v == null || v.isEmpty) ? 'Please select an assigned area' : null,
                   );
                 },
-                loading: () => Container(
-                  height: 48.h,
-                  padding: EdgeInsets.symmetric(horizontal: 14.w),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceVariantDark : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: isDark ? AppColors.borderDark : const Color(0xFFCBD5E1)),
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 16.w,
-                        height: 16.w,
-                        child: const CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      SizedBox(width: 10.w),
-                      Text('Loading areas from database...', style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                error: (_, __) => DropdownButtonFormField<String>(
-                  initialValue: _selectedArea ?? 'Ahmedabad North (Gota & Jagatpur)',
-                  isExpanded: true,
-                  decoration: _inputDecoration('Select Assigned Area', Icons.location_on_outlined, isDark),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Ahmedabad North (Gota & Jagatpur)',
-                      child: Text('Ahmedabad North (Gota & Jagatpur)'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Ahmedabad West (Sindhubhavan & Bodakdev)',
-                      child: Text('Ahmedabad West (Sindhubhavan & Bodakdev)'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Ahmedabad Central (Navrangpura & CG Road)',
-                      child: Text('Ahmedabad Central (Navrangpura & CG Road)'),
-                    ),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) setState(() => _selectedArea = v);
-                  },
-                ),
+                loading: () {
+                  final defaultAreas = [
+                    'Ahmedabad North (Gota & Jagatpur)',
+                    'Ahmedabad North (SG Highway & Chandlodiya)',
+                    'Ahmedabad West (Sindhubhavan & Bodakdev)',
+                    'Ahmedabad West (Bopal & Shela)',
+                    'Ahmedabad Central (Navrangpura & CG Road)',
+                    'Ahmedabad East (Nikol & Vastral)',
+                    'Gujarat Headquarters'
+                  ];
+                  if (_selectedArea == null || !defaultAreas.contains(_selectedArea)) {
+                    _selectedArea = defaultAreas.first;
+                  }
+                  return DropdownButtonFormField<String>(
+                    initialValue: _selectedArea,
+                    isExpanded: true,
+                    decoration: _inputDecoration('Select Assigned Area', Icons.location_on_outlined, isDark),
+                    dropdownColor: isDark ? AppColors.surfaceVariantDark : Colors.white,
+                    items: defaultAreas.map((a) => DropdownMenuItem(value: a, child: Text(a, style: TextStyle(fontSize: 12.5.sp), overflow: TextOverflow.ellipsis))).toList(),
+                    onChanged: (v) { if (v != null) setState(() => _selectedArea = v); },
+                    validator: (v) => (v == null || v.isEmpty) ? 'Please select an assigned area' : null,
+                  );
+                },
+                error: (_, __) {
+                  final defaultAreas = [
+                    'Ahmedabad North (Gota & Jagatpur)',
+                    'Ahmedabad North (SG Highway & Chandlodiya)',
+                    'Ahmedabad West (Sindhubhavan & Bodakdev)',
+                    'Ahmedabad West (Bopal & Shela)',
+                    'Ahmedabad Central (Navrangpura & CG Road)',
+                    'Ahmedabad East (Nikol & Vastral)',
+                    'Gujarat Headquarters'
+                  ];
+                  if (_selectedArea == null || !defaultAreas.contains(_selectedArea)) {
+                    _selectedArea = defaultAreas.first;
+                  }
+                  return DropdownButtonFormField<String>(
+                    initialValue: _selectedArea,
+                    isExpanded: true,
+                    decoration: _inputDecoration('Select Assigned Area', Icons.location_on_outlined, isDark),
+                    dropdownColor: isDark ? AppColors.surfaceVariantDark : Colors.white,
+                    items: defaultAreas.map((a) => DropdownMenuItem(value: a, child: Text(a, style: TextStyle(fontSize: 12.5.sp), overflow: TextOverflow.ellipsis))).toList(),
+                    onChanged: (v) { if (v != null) setState(() => _selectedArea = v); },
+                    validator: (v) => (v == null || v.isEmpty) ? 'Please select an assigned area' : null,
+                  );
+                },
               ),
               SizedBox(height: 24.h),
 
