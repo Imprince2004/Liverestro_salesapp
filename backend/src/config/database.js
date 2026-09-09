@@ -1081,13 +1081,15 @@ const db = {
   async createUser(user) {
     const employeeId = user.employee_id || await this.generateNextEmployeeId();
     const dateOfJoining = user.date_of_joining || new Date().toISOString().split('T')[0];
+    const resolvedRole = user.role || (user.designation && user.designation.toLowerCase().includes('manager') ? 'SALES_MANAGER' : 'SALES_EXECUTIVE');
 
     const newUser = {
       ...user,
+      role: resolvedRole,
       employee_id: employeeId,
       date_of_joining: dateOfJoining,
       date_of_birth: user.date_of_birth || null,
-      designation: user.designation || (user.role === 'SALES_MANAGER' ? 'Sales Manager' : 'Sales Executive'),
+      designation: user.designation || (resolvedRole === 'SALES_MANAGER' ? 'Sales Manager' : 'Sales Executive'),
       profile_photo: user.profile_photo || '',
       territory: user.territory || 'Ahmedabad North',
       city: user.city || 'Ahmedabad',
