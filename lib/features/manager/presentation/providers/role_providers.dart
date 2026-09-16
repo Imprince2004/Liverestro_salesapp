@@ -114,7 +114,19 @@ class TeamMembersNotifier extends StateNotifier<List<TeamMemberModel>> {
             Environment.activeWorkingBaseUrl = base;
             final List<dynamic> rawList = res.data['data'];
             final List<TeamMemberModel> loaded = rawList.map((j) => TeamMemberModel.fromJson(j as Map<String, dynamic>)).toList();
-            state = loaded;
+            
+            final Map<String, TeamMemberModel> map = {};
+            for (final m in loaded) {
+              map[m.id] = m;
+              if (m.email.isNotEmpty) map['email_${m.email.toLowerCase()}'] = m;
+            }
+            for (final m in state) {
+              final key = m.email.isNotEmpty ? 'email_${m.email.toLowerCase()}' : m.id;
+              if (!map.containsKey(key) && !map.containsKey(m.id)) {
+                map[m.id] = m;
+              }
+            }
+            state = map.values.toList();
             fetchedSuccessfully = true;
             try {
               if (effectiveManagerId != null) {

@@ -86,6 +86,8 @@ class _RegisterExecutiveModalState extends ConsumerState<RegisterExecutiveModal>
     setState(() => _isLoading = false);
 
     if (result.success && result.member != null) {
+      ref.read(assignableUsersProvider.notifier).fetchAssignableUsers();
+      ref.read(teamMembersProvider.notifier).fetchTeamFromBackend();
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -231,7 +231,12 @@ exports.getMyTeam = async (req, res) => {
     const callerRole = (req.user && req.user.role) ? req.user.role : (req.query.role || 'SALES_MANAGER');
     const isSuperOrCompanyAdmin = callerRole === 'SUPER_ADMIN' || callerRole === 'COMPANY_ADMIN' || (req.user && req.user.name && req.user.name.toLowerCase().includes('admin'));
 
-    const filter = { role: 'SALES_EXECUTIVE' };
+    const filter = {};
+    if (req.query.role) {
+      filter.role = req.query.role;
+    } else if (!isSuperOrCompanyAdmin) {
+      filter.role = 'SALES_EXECUTIVE';
+    }
     if (!isSuperOrCompanyAdmin && managerId) {
       filter.manager_id = managerId;
     }
