@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
+import '../../../tasks/presentation/providers/task_providers.dart';
 import '../providers/role_providers.dart';
 
 class RegisterExecutiveModal extends ConsumerStatefulWidget {
