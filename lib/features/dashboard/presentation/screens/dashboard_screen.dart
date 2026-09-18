@@ -26,8 +26,10 @@ import '../../../restaurants/presentation/screens/restaurant_search_screen.dart'
 import '../../../restaurants/presentation/screens/nearby_food_places_screen.dart';
 import '../../../visits/presentation/screens/visit_list_screen.dart';
 import '../../../visits/presentation/providers/visit_providers.dart';
+import 'package:intl/intl.dart';
 import '../../../leads/presentation/screens/follow_ups_screen.dart';
 import '../../../leads/presentation/providers/follow_ups_provider.dart';
+import '../../../leads/data/models/follow_up_model.dart';
 import '../../../tracking/presentation/screens/gps_tracking_screen.dart';
 import '../../../calendar/presentation/screens/calendar_screen.dart';
 import '../../../tasks/presentation/screens/tasks_screen.dart';

@@ -5,8 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/colors.dart';
-import '../../../../core/di/service_locator.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../leads/presentation/providers/lead_providers.dart';
 import '../../data/models/pos_software_order_model.dart';
@@ -1582,5 +1580,6 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
           );
         },
       ),
+    );
   }
 }

@@ -22,9 +22,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   void _showScheduleModal() {
     final nameCtrl = TextEditingController();
     final locationCtrl = TextEditingController();
-  void _showScheduleModal() {
-    final nameCtrl = TextEditingController();
-    final locationCtrl = TextEditingController();
     final contactCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     String selectedType = 'Restaurant Visit';
