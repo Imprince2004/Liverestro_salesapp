@@ -60,7 +60,6 @@ class _ManagerTaskAssignmentModalState extends ConsumerState<ManagerTaskAssignme
   final _locationController = TextEditingController();
 
   LeadModel? _selectedLead;
-  ImplementationModel? _leadImplementation;
   int _selectedTabIndex = 0; // 0 = Sales Manager, 1 = Sales Executive
 
   String _selectedTaskType = 'DEMO';
@@ -124,7 +123,6 @@ class _ManagerTaskAssignmentModalState extends ConsumerState<ManagerTaskAssignme
 
         if (mounted) {
           setState(() {
-            _leadImplementation = found;
             _adjustSelectedTaskTypeBasedOnImpl(found);
           });
         }
@@ -146,36 +144,20 @@ class _ManagerTaskAssignmentModalState extends ConsumerState<ManagerTaskAssignme
   }
 
   List<DropdownMenuItem<String>> _getAvailableTaskTypeItems() {
-    final items = <DropdownMenuItem<String>>[];
-    final impl = _leadImplementation;
-
-    final demoDone = impl?.demoStatus.toUpperCase() == 'COMPLETED';
-    final setupDone = impl?.setupStatus.toUpperCase() == 'COMPLETED';
-    final trainingDone = impl?.trainingStatus.toUpperCase() == 'COMPLETED';
-
-    // Strict Sequential Implementation Tasks from Database
-    if (!demoDone) {
-      // Demo still pending -> ONLY show Demo
-      items.add(const DropdownMenuItem(value: 'DEMO', child: Text('✅ Software Demo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))));
-    } else if (!setupDone) {
-      // Demo completed, Setup pending -> ONLY show Setup
-      items.add(const DropdownMenuItem(value: 'SETUP', child: Text('✅ Software Setup / Installation', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))));
-    } else if (!trainingDone) {
-      // Setup completed, Training pending -> ONLY show Staff Training
-      items.add(const DropdownMenuItem(value: 'TRAINING', child: Text('✅ Staff Training & Live Launch', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))));
-    } else {
-      // All 3 completed
-      items.add(const DropdownMenuItem(value: 'TRAINING', child: Text('✅ Staff Training (Refresher)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))));
-    }
-
-    // General Sales Activities
-    items.addAll(const [
-      DropdownMenuItem(value: 'RESTAURANT_VISIT', child: Text('Visit & Pitch', style: TextStyle(fontSize: 12))),
-      DropdownMenuItem(value: 'KYC_DOCUMENTATION', child: Text('KYC Collect', style: TextStyle(fontSize: 12))),
-      DropdownMenuItem(value: 'FOLLOW_UP', child: Text('Follow-up', style: TextStyle(fontSize: 12))),
-    ]);
-
-    return items;
+    return const [
+      DropdownMenuItem(
+        value: 'DEMO',
+        child: Text('Software Demo', style: TextStyle(fontSize: 12.5)),
+      ),
+      DropdownMenuItem(
+        value: 'SETUP',
+        child: Text('Software Setup/Installation', style: TextStyle(fontSize: 12.5)),
+      ),
+      DropdownMenuItem(
+        value: 'TRAINING',
+        child: Text('Staff Training', style: TextStyle(fontSize: 12.5)),
+      ),
+    ];
   }
 
   @override
@@ -309,12 +291,9 @@ class _ManagerTaskAssignmentModalState extends ConsumerState<ManagerTaskAssignme
 
       final typeLabels = {
         'DEMO': 'Software Demo',
-        'SETUP': 'Software Setup',
-        'SOFTWARE_SETUP': 'Software Setup',
+        'SETUP': 'Software Setup/Installation',
+        'SOFTWARE_SETUP': 'Software Setup/Installation',
         'TRAINING': 'Staff Training',
-        'RESTAURANT_VISIT': 'Visit & Pitch',
-        'KYC_DOCUMENTATION': 'KYC Collect',
-        'FOLLOW_UP': 'Follow-up',
       };
       final activityLabel = typeLabels[_selectedTaskType] ?? _selectedTaskType;
       final computedTitle = '$activityLabel at $restaurantName';

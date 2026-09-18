@@ -438,7 +438,13 @@ class _LeadDetailScreenState extends ConsumerState<LeadDetailScreen> {
           _buildDetailRow('POS System Status', '${_currentLead.posSoftware} POS (${_formatCurrency(_currentLead.posAmount)})', isDark),
           _buildDetailRow('Current POS Software', _currentLead.currentPos.isNotEmpty ? _currentLead.currentPos : 'Manual Cash', isDark),
           _buildDetailRow('Seating & Outlets', '${_currentLead.seatingCapacity} seats • ${_currentLead.numOutlets} Outlet(s)', isDark),
-          _buildDetailRow('Priority Level', '${_currentLead.priority} Priority', isDark),
+          _buildDetailRow(
+            'Priority Level',
+            _currentLead.priority.toLowerCase().contains('priority') || _currentLead.priority.toLowerCase().contains('interested')
+                ? _currentLead.priority
+                : '${_currentLead.priority} Priority',
+            isDark,
+          ),
           _buildDetailRow('Next Follow-up', _currentLead.nextFollowUpDate.isNotEmpty ? '${_currentLead.nextFollowUpDate} (${_currentLead.nextFollowUpType})' : 'Not Scheduled', isDark),
 
           if (_currentLead.salesNotes.isNotEmpty || _currentLead.painPoints.isNotEmpty) ...[

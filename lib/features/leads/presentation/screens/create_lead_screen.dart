@@ -33,7 +33,6 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
   int _currentStep = 1;
   final int _totalSteps = 4;
   bool _isSubmitting = false;
-  bool _isLocating = false;
   bool _isRecordingVoice = false;
   bool _isVoicePaused = false;
   int _voiceRecordingSeconds = 0;
@@ -55,10 +54,10 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
   final _emailCtrl = TextEditingController();
   bool _sameAsMobile = true;
   String _preferredContactMethod = 'Call';
-  String _bestTimeToContact = 'Morning (11 AM - 1 PM)';
+  final String _bestTimeToContact = 'Morning (11 AM - 1 PM)';
   String _leadSource = 'Field Visit';
-  String _leadStatus = 'New';
-  String _priority = 'Medium';
+  final String _leadStatus = 'New';
+  String _priority = 'Interested';
 
   // --- Step 2: Restaurant Details ---
   String _businessType = 'Restaurant';
@@ -206,8 +205,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
     }
   }
 
-  Future<void> _fetchGpsCoordinates({bool silent = false}) async {
-    if (!silent) setState(() => _isLocating = true);
+  Future<void> _fetchGpsCoordinates({bool silent = true}) async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       LocationPermission permission = await Geolocator.checkPermission();
@@ -245,7 +243,6 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
       }
     } catch (_) {}
     if (mounted && !silent) {
-      setState(() => _isLocating = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('📍 GPS Locked: ${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}'),
@@ -793,7 +790,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
   bool _validateCurrentStep() {
     if (_currentStep == 1) {
       if (_contactPersonCtrl.text.trim().isEmpty) {
-        _showError('Please enter contact person name');
+        _showError('Please enter owner name');
         return false;
       }
       if (_restaurantNameCtrl.text.trim().isEmpty) {
@@ -823,10 +820,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
         return false;
       }
     } else if (_currentStep == 3) {
-      if (_selectedSolutions.isEmpty) {
-        _showError('Please select at least one required LiveRestro solution');
-        return false;
-      }
+      // Step 3 optional requirements
     } else if (_currentStep == 4) {
       if (_checkInSelfiePath == null || _checkInSelfiePath!.trim().isEmpty) {
         _showError('Verification failed. Selfie Check-In is required.');
@@ -1197,7 +1191,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
           children: [
             _buildTextField(
               controller: _contactPersonCtrl,
-              label: 'Contact Person Name *',
+              label: 'Owner Name *',
               hint: 'e.g. Amit Bhai Patel',
               icon: Icons.person_outline_rounded,
             ),
@@ -1291,19 +1285,6 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
             ),
             SizedBox(height: 12.h),
             _buildDropdownField(
-              label: 'Best Time to Contact',
-              value: _bestTimeToContact,
-              items: [
-                'Morning (11 AM - 1 PM)',
-                'Afternoon (3 PM - 5 PM)',
-                'Evening (6 PM - 8 PM)',
-                'Night (9 PM - 11 PM)',
-              ],
-              icon: Icons.schedule_rounded,
-              onChanged: (val) => setState(() => _bestTimeToContact = val!),
-            ),
-            SizedBox(height: 12.h),
-            _buildDropdownField(
               label: 'Lead Source',
               value: _leadSource,
               items: [
@@ -1322,27 +1303,9 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
             ),
             SizedBox(height: 12.h),
             _buildDropdownField(
-              label: 'Lead Status',
-              value: _leadStatus,
-              items: [
-                'New',
-                'Contacted',
-                'Interested',
-                'Qualified',
-                'Demo Scheduled',
-                'Proposal Sent',
-                'Negotiation',
-                'Won',
-                'Lost',
-              ],
-              icon: Icons.flag_outlined,
-              onChanged: (val) => setState(() => _leadStatus = val!),
-            ),
-            SizedBox(height: 12.h),
-            _buildDropdownField(
               label: 'Priority',
               value: _priority,
-              items: ['Low', 'Medium', 'High', 'Urgent'],
+              items: ['Interested', 'Not Interested'],
               icon: Icons.priority_high_rounded,
               onChanged: (val) => setState(() => _priority = val!),
             ),
@@ -1381,45 +1344,6 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
               ],
               icon: Icons.category_outlined,
               onChanged: (val) => setState(() => _businessType = val!),
-            ),
-            SizedBox(height: 12.h),
-
-            // Live GPS Locator Banner
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.black.withValues(alpha: 0.3) : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: const Color(0xFFCBD5E1)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.my_location_rounded, color: Color(0xFF10B981)),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'GPS Coordinates Locked',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
-                        ),
-                        Text(
-                          'Lat: ${_latitude.toStringAsFixed(4)}, Lng: ${_longitude.toStringAsFixed(4)}',
-                          style: TextStyle(fontSize: 11.sp, color: Colors.grey[600]),
-                        ),
-                      ],
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _isLocating ? null : () => _fetchGpsCoordinates(),
-                    icon: _isLocating
-                        ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.refresh_rounded, size: 14),
-                    label: const Text('Update GPS', style: TextStyle(fontSize: 11)),
-                  ),
-                ],
-              ),
             ),
             SizedBox(height: 12.h),
 
@@ -1470,61 +1394,9 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
   // STEP 3: BUSINESS REQUIREMENTS & AI COPILOT
   // ==========================================
   Widget _buildStep3Requirements(bool isDark) {
-    final solutions = [
-      'POS & Cloud Billing',
-      'Kitchen Display System (KDS)',
-      'Inventory & Recipe Management',
-      'Online QR Table Ordering',
-      'Delivery & Rider Dispatch',
-      'Customer Loyalty & SMS Marketing',
-      'Owner Live Analytics Mobile App',
-      'Multi-Outlet Franchise Sync',
-      'Complete Restaurant Enterprise Suite',
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionCard(
-          isDark: isDark,
-          title: 'Select LiveRestro Solutions *',
-          icon: Icons.checklist_rounded,
-          children: [
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
-              children: solutions.map((sol) {
-                final isSelected = _selectedSolutions.contains(sol);
-                return FilterChip(
-                  label: Text(
-                    sol,
-                    style: TextStyle(
-                      fontSize: 11.5.sp,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
-                    ),
-                  ),
-                  selected: isSelected,
-                  selectedColor: AppColors.primary,
-                  checkmarkColor: Colors.white,
-                  backgroundColor: isDark ? AppColors.surfaceDark : Colors.grey[100],
-                  onSelected: (val) {
-                    HapticFeedback.selectionClick();
-                    setState(() {
-                      if (val) {
-                        _selectedSolutions.add(sol);
-                      } else {
-                        _selectedSolutions.remove(sol);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-        SizedBox(height: 14.h),
-
         _buildSectionCard(
           isDark: isDark,
           title: 'Pain Points & Voice Copilot',
@@ -1965,10 +1837,8 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
               ),
               SizedBox(height: 8.h),
               Text('• Restaurant: ${_restaurantNameCtrl.text.isNotEmpty ? _restaurantNameCtrl.text : "Not provided"}', style: TextStyle(fontSize: 12.sp)),
-              Text('• Contact Person: ${_contactPersonCtrl.text.isNotEmpty ? _contactPersonCtrl.text : "Not provided"} (${_mobileCtrl.text})', style: TextStyle(fontSize: 12.sp)),
+              Text('• Owner Name: ${_contactPersonCtrl.text.isNotEmpty ? _contactPersonCtrl.text : "Not provided"} (${_mobileCtrl.text})', style: TextStyle(fontSize: 12.sp)),
               Text('• Address: ${_addressCtrl.text}, ${_cityCtrl.text}', style: TextStyle(fontSize: 12.sp)),
-              if (_selectedSolutions.isNotEmpty)
-                Text('• Solutions: ${_selectedSolutions.join(", ")}', style: TextStyle(fontSize: 12.sp)),
               Text('• Assigned Rep: $_assignedSalesperson', style: TextStyle(fontSize: 12.sp)),
             ],
           ),
