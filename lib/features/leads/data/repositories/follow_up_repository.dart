@@ -138,6 +138,7 @@ class FollowUpRepository {
                   status: 'PENDING',
                   scheduledTime: scheduled,
                   notes: leadMap['follow_up_notes'] ?? leadMap['followUpNotes'] ?? 'Follow-up scheduled during lead creation',
+                  assignedSalesperson: leadMap['assigned_salesperson'] ?? leadMap['assignedSalesperson'],
                 ),
               );
             }
@@ -213,6 +214,7 @@ class FollowUpRepository {
       status: payload['status'] ?? 'PENDING',
       scheduledTime: DateTime.tryParse(payload['scheduled_time'] ?? '') ?? DateTime.now().add(const Duration(days: 1)),
       notes: payload['notes'] ?? '',
+      assignedSalesperson: payload['assigned_salesperson'] ?? payload['assignedSalesperson'],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

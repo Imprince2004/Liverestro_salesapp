@@ -19,6 +19,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../data/models/lead_model.dart';
 import '../providers/lead_providers.dart';
+import '../providers/follow_ups_provider.dart';
 import '../../../targets/presentation/providers/target_providers.dart';
 
 /// 5-Step Enterprise Lead Creation Wizard for Field Sales Executives
@@ -1018,6 +1019,34 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
 
     final leadNotifier = ref.read(leadListProvider.notifier);
     await leadNotifier.addLead(newLead);
+
+    // Save scheduled follow-up directly to Follow-Up Center / Calendar Database
+    final scheduledDateTime = DateTime(
+      _nextFollowUpDate.year,
+      _nextFollowUpDate.month,
+      _nextFollowUpDate.day,
+      _nextFollowUpTime.hour,
+      _nextFollowUpTime.minute,
+    );
+    try {
+      await ref.read(followUpsProvider.notifier).createFollowUp(
+            restaurantName: newLead.restaurantName,
+            contactPerson: newLead.contactPersonName,
+            phone: newLead.mobile,
+            address: '${newLead.address}, ${newLead.city}'.trim(),
+            type: _nextFollowUpType,
+            priority: _priority,
+            scheduledTime: scheduledDateTime,
+            notes: _followUpNotesCtrl.text.trim().isNotEmpty
+                ? _followUpNotesCtrl.text.trim()
+                : 'Scheduled during Lead Creation for ${newLead.restaurantName}',
+            assignedSalesperson: _assignedSalesperson,
+            leadId: newLead.id,
+          );
+    } catch (_) {}
+
+    // Invalidate followUpsProvider to reflect instantly in Follow-Up Center & Calendar
+    ref.invalidate(followUpsProvider);
 
     // Refresh Target and Implementation providers real-time across entire app
     ref.invalidate(myMonthlyTargetProvider);

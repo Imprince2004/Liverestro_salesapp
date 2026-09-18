@@ -1,80 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/colors.dart';
+import '../../../leads/data/models/follow_up_model.dart';
+import '../../../leads/presentation/providers/follow_ups_provider.dart';
 
-class CalendarScreen extends StatefulWidget {
+class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
 
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _selectedDate = DateTime.now();
   int _currentMonthOffset = 0;
-
-  final Map<String, List<CalendarEvent>> _eventsMap = {
-    DateFormat('yyyy-MM-dd').format(DateTime.now()): [
-      CalendarEvent(
-        time: '10:00 AM',
-        title: 'The Yellow Chili Fine Dine',
-        location: 'Maninagar, Ahmedabad',
-        type: 'Pitch & Demo',
-        status: 'Completed',
-        color: const Color(0xFF10B981),
-      ),
-      CalendarEvent(
-        time: '11:30 AM',
-        title: 'Cafe Coffee Lounge',
-        location: 'Navrangpura, Ahmedabad',
-        type: 'KDS Setup Discussion',
-        status: 'In Progress',
-        color: const Color(0xFF3B82F6),
-      ),
-      CalendarEvent(
-        time: '02:15 PM',
-        title: 'Saffron Multi Cuisine',
-        location: 'Bodakdev, Ahmedabad',
-        type: 'Pricing & Negotiation',
-        status: 'Upcoming',
-        color: const Color(0xFFF59E0B),
-      ),
-      CalendarEvent(
-        time: '04:30 PM',
-        title: 'The Royal Spice Dine',
-        location: 'SG Highway, Ahmedabad',
-        type: 'Contract Signing Visit',
-        status: 'Upcoming',
-        color: const Color(0xFF6366F1),
-      ),
-    ],
-    DateFormat('yyyy-MM-dd').format(DateTime.now().add(const Duration(days: 1))): [
-      CalendarEvent(
-        time: '11:00 AM',
-        title: 'Radhe Restaurant & Banquet',
-        location: 'Vesu, Surat',
-        type: 'Contract Signature & KYC',
-        status: 'Upcoming',
-        color: const Color(0xFF6366F1),
-      ),
-      CalendarEvent(
-        time: '03:30 PM',
-        title: 'Swad Kathiyawadi',
-        location: 'Chandkheda, Ahmedabad',
-        type: 'Product Presentation',
-        status: 'Upcoming',
-        color: const Color(0xFFF59E0B),
-      ),
-    ],
-  };
 
   void _showScheduleModal() {
     final nameCtrl = TextEditingController();
     final locationCtrl = TextEditingController();
-    String selectedType = 'Pitch & Demo';
+  void _showScheduleModal() {
+    final nameCtrl = TextEditingController();
+    final locationCtrl = TextEditingController();
+    final contactCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    String selectedType = 'Restaurant Visit';
     TimeOfDay selectedTime = const TimeOfDay(hour: 11, minute: 0);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -123,8 +76,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     TextField(
                       controller: nameCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Restaurant Name *',
+                        labelText: 'Restaurant / Outlet Name *',
                         prefixIcon: Icon(Icons.restaurant_rounded),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    TextField(
+                      controller: contactCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Owner / Contact Person',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    TextField(
+                      controller: phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone / Mobile',
+                        prefixIcon: Icon(Icons.phone_outlined),
                       ),
                     ),
                     SizedBox(height: 12.h),
@@ -143,10 +113,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         prefixIcon: Icon(Icons.assignment_rounded),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'Pitch & Demo', child: Text('Pitch & Demo')),
-                        DropdownMenuItem(value: 'KDS Setup Discussion', child: Text('KDS Setup Discussion')),
-                        DropdownMenuItem(value: 'Pricing & Negotiation', child: Text('Pricing & Negotiation')),
+                        DropdownMenuItem(value: 'Restaurant Visit', child: Text('Restaurant Visit')),
+                        DropdownMenuItem(value: 'Software Demo', child: Text('Software Demo')),
+                        DropdownMenuItem(value: 'Software Setup/Installation', child: Text('Software Setup/Installation')),
+                        DropdownMenuItem(value: 'Staff Training', child: Text('Staff Training')),
+                        DropdownMenuItem(value: 'POS Upgrade & Quotation', child: Text('POS Upgrade & Quotation')),
                         DropdownMenuItem(value: 'Contract Signature & KYC', child: Text('Contract Signature & KYC')),
+                        DropdownMenuItem(value: 'Phone Call Follow-Up', child: Text('Phone Call Follow-Up')),
                       ],
                       onChanged: (val) {
                         if (val != null) setModalState(() => selectedType = val);
@@ -183,27 +156,45 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           padding: EdgeInsets.symmetric(vertical: 14.h),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                         ),
-                        onPressed: () {
-                          if (nameCtrl.text.trim().isEmpty) return;
-                          final dateKey = DateFormat('yyyy-MM-dd').format(_selectedDate);
-                          final newEvt = CalendarEvent(
-                            time: selectedTime.format(context),
-                            title: nameCtrl.text.trim(),
-                            location: locationCtrl.text.trim().isEmpty ? 'Ahmedabad' : locationCtrl.text.trim(),
-                            type: selectedType,
-                            status: 'Upcoming',
-                            color: const Color(0xFF6366F1),
+                        onPressed: () async {
+                          if (nameCtrl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter restaurant name')),
+                            );
+                            return;
+                          }
+
+                          final scheduledDateTime = DateTime(
+                            _selectedDate.year,
+                            _selectedDate.month,
+                            _selectedDate.day,
+                            selectedTime.hour,
+                            selectedTime.minute,
                           );
-                          setState(() {
-                            _eventsMap.putIfAbsent(dateKey, () => []).add(newEvt);
-                          });
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('📅 Visit added to schedule successfully!'),
-                              backgroundColor: Color(0xFF10B981),
-                            ),
-                          );
+
+                          await ref.read(followUpsProvider.notifier).createFollowUp(
+                                restaurantName: nameCtrl.text.trim(),
+                                contactPerson: contactCtrl.text.trim().isNotEmpty ? contactCtrl.text.trim() : 'Owner / Manager',
+                                phone: phoneCtrl.text.trim(),
+                                address: locationCtrl.text.trim().isNotEmpty ? locationCtrl.text.trim() : 'Ahmedabad',
+                                type: selectedType,
+                                priority: 'Interested',
+                                scheduledTime: scheduledDateTime,
+                                notes: 'Scheduled via Sales Visit Calendar',
+                              );
+
+                          ref.invalidate(followUpsProvider);
+
+                          if (mounted) {
+                            Navigator.pop(ctx);
+                            HapticFeedback.mediumImpact();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('📅 Visit added to schedule successfully!'),
+                                backgroundColor: Color(0xFF10B981),
+                              ),
+                            );
+                          }
                         },
                         icon: const Icon(Icons.calendar_today_rounded),
                         label: Text('Confirm Schedule', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
@@ -219,6 +210,48 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
+  Map<String, List<CalendarEvent>> _buildEventsMap(List<FollowUpModel> followUps) {
+    final map = <String, List<CalendarEvent>>{};
+
+    for (final f in followUps) {
+      final dateKey = DateFormat('yyyy-MM-dd').format(f.scheduledTime);
+      final timeStr = DateFormat('hh:mm a').format(f.scheduledTime);
+
+      Color eventColor;
+      String statusStr;
+      if (f.status.toUpperCase() == 'COMPLETED') {
+        eventColor = const Color(0xFF10B981);
+        statusStr = 'Completed';
+      } else if (f.computedStatus == FollowUpStatus.overdue) {
+        eventColor = const Color(0xFFEF4444);
+        statusStr = 'Overdue';
+      } else if (f.computedStatus == FollowUpStatus.today) {
+        eventColor = const Color(0xFF3B82F6);
+        statusStr = 'Today';
+      } else {
+        eventColor = const Color(0xFF6366F1);
+        statusStr = 'Upcoming';
+      }
+
+      final event = CalendarEvent(
+        id: f.id,
+        time: timeStr,
+        title: f.restaurantName,
+        contactPerson: f.contactPerson,
+        phone: f.phone,
+        location: f.address.isNotEmpty ? f.address : 'Ahmedabad',
+        type: f.followUpType,
+        status: statusStr,
+        color: eventColor,
+        assignedSalesperson: f.assignedSalesperson,
+      );
+
+      map.putIfAbsent(dateKey, () => []).add(event);
+    }
+
+    return map;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -226,7 +259,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final currentMonth = DateTime(now.year, now.month + _currentMonthOffset, 1);
     final daysInMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
     final selectedKey = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final eventsForDay = _eventsMap[selectedKey] ?? [];
+
+    final followUpsState = ref.watch(followUpsProvider);
+    final eventsMap = _buildEventsMap(followUpsState.allFollowUps);
+    final eventsForDay = eventsMap[selectedKey] ?? [];
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FE),
@@ -246,6 +282,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh Calendar',
+            onPressed: () => ref.read(followUpsProvider.notifier).loadFollowUps(),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primary,
@@ -299,7 +342,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     date.month == _selectedDate.month &&
                     date.year == _selectedDate.year;
                 final dateKey = DateFormat('yyyy-MM-dd').format(date);
-                final hasEvents = _eventsMap.containsKey(dateKey) && _eventsMap[dateKey]!.isNotEmpty;
+                final hasEvents = eventsMap.containsKey(dateKey) && eventsMap[dateKey]!.isNotEmpty;
 
                 return GestureDetector(
                   onTap: () {
@@ -366,7 +409,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Agenda for ${DateFormat('dd MMMM').format(_selectedDate)}',
+                  'Agenda for ${DateFormat('dd MMMM yyyy').format(_selectedDate)}',
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.bold,
@@ -398,7 +441,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         Icon(Icons.event_busy_rounded, size: 50.sp, color: Colors.grey[300]),
                         SizedBox(height: 10.h),
                         Text(
-                          'No visits scheduled for this date',
+                          'No visits or follow-ups scheduled for this date',
                           style: TextStyle(color: Colors.grey[500], fontSize: 13.5.sp, fontWeight: FontWeight.w500),
                         ),
                         SizedBox(height: 12.h),
@@ -492,6 +535,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       ),
                                     ],
                                   ),
+                                  if (evt.contactPerson.isNotEmpty && evt.contactPerson != 'Owner') ...[
+                                    SizedBox(height: 2.h),
+                                    Text(
+                                      'Contact: ${evt.contactPerson} ${evt.phone.isNotEmpty ? "(${evt.phone})" : ""}',
+                                      style: TextStyle(fontSize: 11.5.sp, color: isDark ? Colors.white70 : Colors.black54),
+                                    ),
+                                  ],
+                                  if (evt.assignedSalesperson != null && evt.assignedSalesperson!.isNotEmpty) ...[
+                                    SizedBox(height: 2.h),
+                                    Text(
+                                      'Sales Rep: ${evt.assignedSalesperson}',
+                                      style: TextStyle(fontSize: 11.sp, color: AppColors.primary, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
                                   SizedBox(height: 4.h),
                                   Text(
                                     evt.type,
@@ -502,7 +559,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     children: [
                                       Icon(Icons.location_on_rounded, size: 12.sp, color: Colors.grey),
                                       SizedBox(width: 4.w),
-                                      Text(evt.location, style: TextStyle(fontSize: 11.5.sp, color: Colors.grey[500])),
+                                      Expanded(
+                                        child: Text(
+                                          evt.location,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(fontSize: 11.5.sp, color: Colors.grey[500]),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -521,19 +585,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
 }
 
 class CalendarEvent {
+  final String id;
   final String time;
   final String title;
+  final String contactPerson;
+  final String phone;
   final String location;
   final String type;
   final String status;
   final Color color;
+  final String? assignedSalesperson;
 
   CalendarEvent({
+    required this.id,
     required this.time,
     required this.title,
+    this.contactPerson = '',
+    this.phone = '',
     required this.location,
     required this.type,
     required this.status,
     required this.color,
+    this.assignedSalesperson,
   });
 }

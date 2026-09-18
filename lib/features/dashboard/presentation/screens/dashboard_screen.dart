@@ -1475,6 +1475,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showFollowUpsSheet(BuildContext context, bool isDark) {
+    final followUpsState = ref.read(followUpsProvider);
+    final allItems = followUpsState.allFollowUps;
+    final dueTodayCount = followUpsState.todayCount;
+    final displayItems = allItems.take(4).toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1535,7 +1540,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Text(
-                      '2 Due Today',
+                      '$dueTodayCount Due Today',
                       style: TextStyle(
                         fontSize: 11.5.sp,
                         fontWeight: FontWeight.bold,
@@ -1546,51 +1551,112 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ],
               ),
               SizedBox(height: 18.h),
-              _buildFollowUpItem(
-                'The Royal Spice Fine Dine',
-                'Owner: Amit Patel • POS Upgrade discussion',
-                '03:00 PM Today',
-                const Color(0xFFF59E0B),
-                isDark,
-              ),
-              SizedBox(height: 10.h),
-              _buildFollowUpItem(
-                'Tandoori Treat Dine & Bar',
-                'Owner: Suresh Shah • Demo feedback & pricing',
-                '05:30 PM Today',
-                const Color(0xFF10B981),
-                isDark,
-              ),
-              SizedBox(height: 10.h),
-              _buildFollowUpItem(
-                'Tea Post - Desi Cafe',
-                'Owner: Bhavesh Shah • Contract signature visit',
-                'Tomorrow 11:00 AM',
-                const Color(0xFF6366F1),
-                isDark,
-              ),
-              SizedBox(height: 20.h),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+              if (displayItems.isEmpty) ...[
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.h),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.event_available_rounded, size: 42.sp, color: Colors.grey[400]),
+                        SizedBox(height: 8.h),
+                        Text(
+                          'No Pending Follow-Ups',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          'All follow-ups are up to date. Schedule next visits from Create Lead or Calendar.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11.5.sp, color: Colors.grey[500]),
+                        ),
+                      ],
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() => _navIndex = 2);
-                  },
-                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                  label: Text(
-                    'Open Visit Calendar',
-                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-                  ),
                 ),
+              ] else ...[
+                ...displayItems.map((f) {
+                  Color tagColor;
+                  String timeLabel;
+                  if (f.status.toUpperCase() == 'COMPLETED') {
+                    tagColor = const Color(0xFF10B981);
+                    timeLabel = 'Completed';
+                  } else if (f.computedStatus == FollowUpStatus.overdue) {
+                    tagColor = const Color(0xFFEF4444);
+                    timeLabel = 'Overdue (${DateFormat('dd MMM hh:mm a').format(f.scheduledTime)})';
+                  } else if (f.computedStatus == FollowUpStatus.today) {
+                    tagColor = const Color(0xFF3B82F6);
+                    timeLabel = 'Today at ${DateFormat('hh:mm a').format(f.scheduledTime)}';
+                  } else {
+                    tagColor = const Color(0xFF6366F1);
+                    timeLabel = DateFormat('dd MMM, hh:mm a').format(f.scheduledTime);
+                  }
+
+                  final subtitle = 'Contact: ${f.contactPerson} • ${f.followUpType}';
+
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 10.h),
+                    child: _buildFollowUpItem(
+                      f.restaurantName,
+                      subtitle,
+                      timeLabel,
+                      tagColor,
+                      isDark,
+                    ),
+                  );
+                }),
+              ],
+              SizedBox(height: 14.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const FollowUpsScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.list_alt_rounded, size: 18),
+                      label: Text(
+                        'View All Follow-Ups',
+                        style: TextStyle(fontSize: 12.5.sp, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        setState(() => _navIndex = 2);
+                      },
+                      icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                      label: Text(
+                        'Visit Calendar',
+                        style: TextStyle(fontSize: 12.5.sp, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -705,6 +705,19 @@ class _FollowUpsScreenState extends ConsumerState<FollowUpsScreen> with SingleTi
                     ),
                   ],
                 ),
+                if (item.assignedSalesperson != null && item.assignedSalesperson!.isNotEmpty) ...[
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Icon(Icons.badge_outlined, size: 13.sp, color: AppColors.primary),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Assigned Rep: ${item.assignedSalesperson}',
+                        style: TextStyle(fontSize: 11.5.sp, color: AppColors.primary, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ],
                 if (item.notes.isNotEmpty) ...[
                   SizedBox(height: 8.h),
                   Container(
@@ -721,15 +734,19 @@ class _FollowUpsScreenState extends ConsumerState<FollowUpsScreen> with SingleTi
                   ),
                 ],
                 SizedBox(height: 12.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8.w,
+                  runSpacing: 8.h,
                   children: [
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.schedule_rounded, size: 14.sp, color: Colors.grey[500]),
                         SizedBox(width: 4.w),
                         Text(
-                          DateFormat('dd MMM, hh:mm a').format(item.scheduledTime),
+                          DateFormat('dd MMM yyyy, hh:mm a').format(item.scheduledTime),
                           style: TextStyle(
                             fontSize: 11.5.sp,
                             fontWeight: FontWeight.w600,
@@ -740,13 +757,17 @@ class _FollowUpsScreenState extends ConsumerState<FollowUpsScreen> with SingleTi
                     ),
                     if (!isCompleted)
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
+                            visualDensity: VisualDensity.compact,
                             style: IconButton.styleFrom(
                               backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
                               foregroundColor: const Color(0xFF10B981),
+                              padding: EdgeInsets.all(6.w),
                             ),
-                            icon: const Icon(Icons.phone_rounded, size: 18),
+                            icon: const Icon(Icons.phone_rounded, size: 17),
+                            tooltip: 'Call Client',
                             onPressed: () {
                               HapticFeedback.lightImpact();
                               _makePhoneCall(item.phone);
@@ -754,11 +775,14 @@ class _FollowUpsScreenState extends ConsumerState<FollowUpsScreen> with SingleTi
                           ),
                           SizedBox(width: 6.w),
                           IconButton(
+                            visualDensity: VisualDensity.compact,
                             style: IconButton.styleFrom(
                               backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                               foregroundColor: const Color(0xFF3B82F6),
+                              padding: EdgeInsets.all(6.w),
                             ),
-                            icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+                            icon: const Icon(Icons.edit_calendar_rounded, size: 17),
+                            tooltip: 'Reschedule',
                             onPressed: () => _rescheduleFollowUp(item),
                           ),
                           SizedBox(width: 6.w),
@@ -768,10 +792,11 @@ class _FollowUpsScreenState extends ConsumerState<FollowUpsScreen> with SingleTi
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                              visualDensity: VisualDensity.compact,
                             ),
                             onPressed: () => _markAsCompleted(item),
-                            icon: const Icon(Icons.check_rounded, size: 16),
-                            label: Text('Done', style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.bold)),
+                            icon: const Icon(Icons.check_rounded, size: 15),
+                            label: Text('Done', style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),

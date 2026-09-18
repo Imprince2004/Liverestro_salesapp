@@ -114,6 +114,8 @@ class FollowUpsNotifier extends StateNotifier<FollowUpsState> {
     required String priority,
     required DateTime scheduledTime,
     required String notes,
+    String? assignedSalesperson,
+    String? leadId,
   }) async {
     state = state.copyWith(isSaving: true, clearError: true);
 
@@ -128,6 +130,8 @@ class FollowUpsNotifier extends StateNotifier<FollowUpsState> {
         'status': 'PENDING',
         'scheduled_time': scheduledTime.toIso8601String(),
         'notes': notes,
+        if (assignedSalesperson != null) 'assigned_salesperson': assignedSalesperson,
+        if (leadId != null) 'lead_id': leadId,
       };
 
       await _repository.createFollowUp(data);

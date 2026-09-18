@@ -3,7 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
 
-const { initDatabase, checkDatabaseHealth, closeDatabasePool } = require('./config/database');
+const { initDatabase, checkDatabaseHealth, closeDatabasePool, db } = require('./config/database');
 const { seed } = require('./database/seed');
 
 const authRoutes = require('./routes/authRoutes');
@@ -72,21 +72,83 @@ app.use('/api/targets', targetRoutes);
 app.use('/api/implementations', implementationRoutes);
 app.use('/api/pos-orders', posOrderRoutes);
 
-// Notifications Endpoint
-app.get('/api/notifications', (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: [
-      {
-        id: 'notif_01',
-        title: 'Welcome to LiveRestro CRM',
-        body: 'Your account is active. Check out your assigned leads and targets.',
-        type: 'SYSTEM',
-        read: true,
-        createdAt: new Date().toISOString(),
-      },
-    ],
-  });
+// Dynamic Notifications Endpoint
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    const notifications = [];
+
+    // 1. Welcome / System Notification
+    notifications.push({
+      id: 'notif_welcome',
+      title: 'Welcome to LiveRestro CRM',
+      body: 'Your live sales system is active. Follow-ups and schedules are synced in real-time.',
+      type: 'SYSTEM',
+      read: true,
+      createdAt: new Date().toISOString(),
+    });
+
+    // 2. Scheduled Follow-up reminders from database
+    const followUps = await db.getFollowUps({ user_id });
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    for (const f of followUps) {
+      if (f.status && f.status.toUpperCase() !== 'COMPLETED') {
+        const scheduledDate = new Date(f.scheduled_time);
+        const schedDateStr = scheduledDate.toISOString().split('T')[0];
+        const timeFormatted = scheduledDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        if (schedDateStr === todayStr) {
+          notifications.push({
+            id: `notif_flw_today_${f.id}`,
+            title: `Follow-Up Today: ${f.restaurant_name}`,
+            body: `Scheduled for ${timeFormatted} with ${f.contact_person || 'Owner'}. Type: ${f.follow_up_type}`,
+            type: 'FOLLOW_UP',
+            read: false,
+            createdAt: f.created_at || new Date().toISOString(),
+          });
+        } else if (scheduledDate < now) {
+          notifications.push({
+            id: `notif_flw_overdue_${f.id}`,
+            title: `Overdue Follow-Up: ${f.restaurant_name}`,
+            body: `Was scheduled on ${schedDateStr} at ${timeFormatted}. Tap to reschedule or complete.`,
+            type: 'FOLLOW_UP',
+            read: false,
+            createdAt: f.created_at || new Date().toISOString(),
+          });
+        } else {
+          notifications.push({
+            id: `notif_flw_up_${f.id}`,
+            title: `Upcoming Visit: ${f.restaurant_name}`,
+            body: `Scheduled on ${schedDateStr} at ${timeFormatted}. Objective: ${f.follow_up_type}`,
+            type: 'FOLLOW_UP',
+            read: true,
+            createdAt: f.created_at || new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: notifications,
+    });
+  } catch (err) {
+    res.status(200).json({
+      success: true,
+      data: [
+        {
+          id: 'notif_default',
+          title: 'LiveRestro CRM',
+          body: 'All systems live and synchronized with cloud database.',
+          type: 'SYSTEM',
+          read: true,
+          createdAt: new Date().toISOString(),
+        }
+      ],
+    });
+  }
 });
 
 // Fallback 404

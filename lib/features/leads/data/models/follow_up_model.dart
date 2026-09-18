@@ -37,6 +37,7 @@ class FollowUpModel {
   final String status; // 'PENDING', 'COMPLETED', 'CANCELLED'
   final DateTime scheduledTime;
   final String notes;
+  final String? assignedSalesperson;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -53,6 +54,7 @@ class FollowUpModel {
     required this.status,
     required this.scheduledTime,
     required this.notes,
+    this.assignedSalesperson,
     this.createdAt,
     this.updatedAt,
   });
@@ -109,6 +111,7 @@ class FollowUpModel {
       status: json['status']?.toString() ?? 'PENDING',
       scheduledTime: parsedScheduledTime,
       notes: json['notes']?.toString() ?? '',
+      assignedSalesperson: json['assigned_salesperson']?.toString() ?? json['assignedSalesperson']?.toString() ?? json['user_name']?.toString() ?? json['userName']?.toString(),
       createdAt: parsedCreatedAt,
       updatedAt: parsedUpdatedAt,
     );
@@ -128,6 +131,7 @@ class FollowUpModel {
       'status': status,
       'scheduled_time': scheduledTime.toIso8601String(),
       'notes': notes,
+      'assigned_salesperson': assignedSalesperson,
     };
   }
 
@@ -144,6 +148,7 @@ class FollowUpModel {
     String? status,
     DateTime? scheduledTime,
     String? notes,
+    String? assignedSalesperson,
   }) {
     return FollowUpModel(
       id: id ?? this.id,
@@ -158,6 +163,7 @@ class FollowUpModel {
       status: status ?? this.status,
       scheduledTime: scheduledTime ?? this.scheduledTime,
       notes: notes ?? this.notes,
+      assignedSalesperson: assignedSalesperson ?? this.assignedSalesperson,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
