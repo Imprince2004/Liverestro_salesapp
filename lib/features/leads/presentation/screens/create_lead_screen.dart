@@ -68,15 +68,15 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
   final _pincodeCtrl = TextEditingController();
   double _latitude = 23.1118;
   double _longitude = 72.5442;
-  int _numOutlets = 1;
-  int _seatingCapacity = 20;
-  String _cuisine = 'Multi-Cuisine & Dining';
-  String _currentPos = 'Manual Billing';
-  String _currentOrdering = 'Swiggy & Zomato';
+  final int _numOutlets = 1;
+  final int _seatingCapacity = 20;
+  final String _cuisine = 'Multi-Cuisine & Dining';
+  final String _currentPos = 'Manual Billing';
+  final String _currentOrdering = 'Swiggy & Zomato';
   final List<String> _selectedDeliveryPlatforms = ['Swiggy', 'Zomato'];
   final int _monthlyOrders = 350;
   final _monthlyRevenueCtrl = TextEditingController(text: '250000');
-  String _posSoftware = 'Free'; // 'Free' or 'Paid'
+  final String _posSoftware = 'Free'; // 'Free' or 'Paid'
   final _posAmountCtrl = TextEditingController(text: '15000');
 
   // --- Step 3: Business Requirements ---
@@ -822,14 +822,6 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
         _showError('Please enter city');
         return false;
       }
-      if (_posSoftware == 'Paid') {
-        final amountText = _posAmountCtrl.text.trim().replaceAll(',', '');
-        final amount = double.tryParse(amountText);
-        if (amount == null || amount <= 0) {
-          _showError('Please enter a valid POS Software Amount (₹)');
-          return false;
-        }
-      }
     } else if (_currentStep == 3) {
       if (_selectedSolutions.isEmpty) {
         _showError('Please select at least one required LiveRestro solution');
@@ -1468,192 +1460,6 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
               icon: Icons.pin_drop_outlined,
               keyboardType: TextInputType.number,
             ),
-          ],
-        ),
-        SizedBox(height: 14.h),
-
-        _buildSectionCard(
-          isDark: isDark,
-          title: 'Capacity, Scale & Current Systems',
-          icon: Icons.insights_rounded,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    label: 'No. of Outlets',
-                    hint: '1',
-                    icon: Icons.numbers_rounded,
-                    keyboardType: TextInputType.number,
-                    controller: TextEditingController(text: '$_numOutlets'),
-                    onChanged: (val) => _numOutlets = int.tryParse(val) ?? 1,
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: _buildTextField(
-                    label: 'Seating Capacity',
-                    hint: '20',
-                    icon: Icons.chair_alt_rounded,
-                    keyboardType: TextInputType.number,
-                    controller: TextEditingController(text: '$_seatingCapacity'),
-                    onChanged: (val) => _seatingCapacity = int.tryParse(val) ?? 20,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            _buildDropdownField(
-              label: 'Cuisine Specialty',
-              value: _cuisine,
-              items: [
-                'Multi-Cuisine & Dining',
-                'Authentic Gujarati & Kathiyawadi',
-                'North Indian & Mughlai',
-                'South Indian',
-                'Fast Food & Street Food',
-                'Cafe, Bakery & Desserts',
-                'Continental & Italian',
-                'Chinese & Pan-Asian',
-              ],
-              icon: Icons.restaurant_menu_rounded,
-              onChanged: (val) => setState(() => _cuisine = val!),
-            ),
-            SizedBox(height: 12.h),
-            _buildDropdownField(
-              label: 'Current POS Software',
-              value: _currentPos,
-              items: ['Manual Billing', 'Petpooja', 'Posist', 'Vyapar', 'Paper KOT', 'Other'],
-              icon: Icons.point_of_sale_rounded,
-              onChanged: (val) => setState(() => _currentPos = val!),
-            ),
-            SizedBox(height: 12.h),
-            _buildDropdownField(
-              label: 'Ordering System',
-              value: _currentOrdering,
-              items: ['Swiggy & Zomato', 'Direct Table QR', 'Paper Slips', 'Phone Orders', 'None'],
-              icon: Icons.receipt_long_rounded,
-              onChanged: (val) => setState(() => _currentOrdering = val!),
-            ),
-            SizedBox(height: 12.h),
-            _buildTextField(
-              controller: _monthlyRevenueCtrl,
-              label: 'Estimated Monthly Revenue (₹)',
-              hint: '250000',
-              icon: Icons.currency_rupee_rounded,
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        SizedBox(height: 14.h),
-
-        _buildSectionCard(
-          isDark: isDark,
-          title: 'LiveRestro POS Software *',
-          icon: Icons.point_of_sale_rounded,
-          children: [
-            Text(
-              'POS Software Plan',
-              style: TextStyle(
-                fontSize: 12.5.sp,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : const Color(0xFF475569),
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _posSoftware = 'Free');
-                    },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-                      decoration: BoxDecoration(
-                        color: _posSoftware == 'Free'
-                            ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.25 : 0.12)
-                            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: _posSoftware == 'Free' ? const Color(0xFF10B981) : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('🆓', style: TextStyle(fontSize: 16.sp)),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'Free',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: _posSoftware == 'Free'
-                                  ? const Color(0xFF10B981)
-                                  : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _posSoftware = 'Paid');
-                    },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
-                      decoration: BoxDecoration(
-                        color: _posSoftware == 'Paid'
-                            ? const Color(0xFFF97316).withValues(alpha: isDark ? 0.25 : 0.12)
-                            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: _posSoftware == 'Paid' ? const Color(0xFFF97316) : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('💰', style: TextStyle(fontSize: 16.sp)),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'Paid',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: _posSoftware == 'Paid'
-                                  ? const Color(0xFFF97316)
-                                  : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (_posSoftware == 'Paid') ...[
-              SizedBox(height: 14.h),
-              _buildTextField(
-                controller: _posAmountCtrl,
-                label: 'POS Software Amount (₹) *',
-                hint: 'e.g. 15000',
-                icon: Icons.currency_rupee_rounded,
-                keyboardType: TextInputType.number,
-              ),
-            ],
           ],
         ),
       ],
