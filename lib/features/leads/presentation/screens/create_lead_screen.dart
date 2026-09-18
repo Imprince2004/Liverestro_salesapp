@@ -70,7 +70,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
   final int _numOutlets = 1;
   final int _seatingCapacity = 20;
   final String _cuisine = 'Multi-Cuisine & Dining';
-  final String _currentPos = 'Manual Billing';
+  final _currentPosCtrl = TextEditingController();
   final String _currentOrdering = 'Swiggy & Zomato';
   final List<String> _selectedDeliveryPlatforms = ['Swiggy', 'Zomato'];
   final int _monthlyOrders = 350;
@@ -122,6 +122,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
     _cityCtrl.dispose();
     _areaCtrl.dispose();
     _pincodeCtrl.dispose();
+    _currentPosCtrl.dispose();
     _monthlyRevenueCtrl.dispose();
     _posAmountCtrl.dispose();
     _painPointsCtrl.dispose();
@@ -173,6 +174,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
       _cityCtrl.text = draft['city'] ?? 'Ahmedabad';
       _areaCtrl.text = draft['area'] ?? 'Jagatpur';
       _pincodeCtrl.text = draft['pincode'] ?? '';
+      _currentPosCtrl.text = draft['currentPos'] ?? '';
       _painPointsCtrl.text = draft['painPoints'] ?? '';
     });
   }
@@ -190,6 +192,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
       'city': _cityCtrl.text,
       'area': _areaCtrl.text,
       'pincode': _pincodeCtrl.text,
+      'currentPos': _currentPosCtrl.text,
       'painPoints': _painPointsCtrl.text,
       'step': _currentStep,
       'savedAt': DateTime.now().toIso8601String(),
@@ -970,7 +973,7 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
       numOutlets: _numOutlets,
       seatingCapacity: _seatingCapacity,
       cuisine: _cuisine,
-      currentPos: _currentPos,
+      currentPos: _currentPosCtrl.text.trim().isNotEmpty ? _currentPosCtrl.text.trim() : 'Manual Billing',
       currentOrderingSystem: _currentOrdering,
       deliveryPlatforms: _selectedDeliveryPlatforms,
       monthlyOrders: _monthlyOrders,
@@ -1308,6 +1311,13 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
               items: ['Interested', 'Not Interested'],
               icon: Icons.priority_high_rounded,
               onChanged: (val) => setState(() => _priority = val!),
+            ),
+            SizedBox(height: 12.h),
+            _buildTextField(
+              controller: _currentPosCtrl,
+              label: 'Current Using POS Software',
+              hint: 'e.g. Petpooja, Posist, Vyapar, Manual Billing',
+              icon: Icons.point_of_sale_rounded,
             ),
           ],
         ),
@@ -1839,6 +1849,8 @@ class _CreateLeadScreenState extends ConsumerState<CreateLeadScreen> {
               Text('• Restaurant: ${_restaurantNameCtrl.text.isNotEmpty ? _restaurantNameCtrl.text : "Not provided"}', style: TextStyle(fontSize: 12.sp)),
               Text('• Owner Name: ${_contactPersonCtrl.text.isNotEmpty ? _contactPersonCtrl.text : "Not provided"} (${_mobileCtrl.text})', style: TextStyle(fontSize: 12.sp)),
               Text('• Address: ${_addressCtrl.text}, ${_cityCtrl.text}', style: TextStyle(fontSize: 12.sp)),
+              if (_currentPosCtrl.text.trim().isNotEmpty)
+                Text('• Current POS: ${_currentPosCtrl.text.trim()}', style: TextStyle(fontSize: 12.sp)),
               Text('• Assigned Rep: $_assignedSalesperson', style: TextStyle(fontSize: 12.sp)),
             ],
           ),
