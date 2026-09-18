@@ -42,6 +42,43 @@ class FollowUpRepository {
     }
   }
 
+  static DateTime _parseFlexibleDate(dynamic dateVal, dynamic timeVal) {
+    if (dateVal == null) return DateTime.now().add(const Duration(days: 1));
+    final dateStr = dateVal.toString().trim();
+    final timeStr = (timeVal != null && timeVal.toString().trim().isNotEmpty) ? timeVal.toString().trim() : '11:00 AM';
+
+    int hour = 11;
+    int minute = 0;
+    final timeMatch = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', caseSensitive: false).firstMatch(timeStr);
+    if (timeMatch != null) {
+      hour = int.tryParse(timeMatch.group(1) ?? '11') ?? 11;
+      minute = int.tryParse(timeMatch.group(2) ?? '0') ?? 0;
+      final ampm = timeMatch.group(3)?.toUpperCase();
+      if (ampm == 'PM' && hour < 12) hour += 12;
+      if (ampm == 'AM' && hour == 12) hour = 0;
+    }
+
+    if (dateStr.contains('/') || dateStr.contains('-')) {
+      final delim = dateStr.contains('/') ? '/' : '-';
+      final parts = dateStr.split(delim);
+      if (parts.length == 3) {
+        if (parts[0].length == 4) {
+          final y = int.tryParse(parts[0]) ?? DateTime.now().year;
+          final m = int.tryParse(parts[1]) ?? 1;
+          final d = int.tryParse(parts[2]) ?? 1;
+          return DateTime(y, m, d, hour, minute);
+        } else {
+          final d = int.tryParse(parts[0]) ?? 1;
+          final m = int.tryParse(parts[1]) ?? 1;
+          final y = int.tryParse(parts[2]) ?? DateTime.now().year;
+          return DateTime(y, m, d, hour, minute);
+        }
+      }
+    }
+
+    return DateTime.tryParse(dateStr) ?? DateTime.now().add(const Duration(days: 1));
+  }
+
   /// Fetches follow-ups and dynamic category counts from the backend database with offline resiliency
   Future<({FollowUpCounts counts, List<FollowUpModel> items})> getFollowUps({
     String tab = 'all',
@@ -56,6 +93,8 @@ class FollowUpRepository {
       if (search.trim().isNotEmpty) 'search': search.trim(),
       'userId': effectiveUserId,
     };
+
+    List<FollowUpModel> allItems = [];
 
     // 1. Try real backend database via fast candidate failover
     try {
@@ -76,61 +115,61 @@ class FollowUpRepository {
                 ? res.data as Map<String, dynamic>
                 : json.decode(res.data.toString()) as Map<String, dynamic>;
 
-            final countsJson = decoded['counts'] as Map<String, dynamic>?;
             final dataJson = decoded['data'] as List<dynamic>? ?? [];
-
-            final counts = FollowUpCounts.fromJson(countsJson);
-            final items = dataJson
+            allItems = dataJson
                 .map((e) => FollowUpModel.fromJson(e as Map<String, dynamic>))
                 .toList();
 
             // Persist latest database records in local cache
-            await _hive.put(cacheKey, jsonEncode(items.map((i) => i.toJson()).toList()));
-            return (counts: counts, items: items);
+            await _hive.put(cacheKey, jsonEncode(allItems.map((i) => i.toJson()).toList()));
+            break;
           }
         } catch (_) {}
       }
     } catch (_) {}
 
-    // 2. Offline / Local Cache Fallback: Retrieve saved follow-ups
-    List<FollowUpModel> cachedList = [];
-    final cached = _hive.get<String>(cacheKey);
-    if (cached != null) {
-      try {
-        final List<dynamic> list = jsonDecode(cached);
-        cachedList = list.map((e) => FollowUpModel.fromJson(Map<String, dynamic>.from(e))).toList();
-      } catch (_) {}
+    // 2. Offline / Local Cache Fallback: Retrieve saved follow-ups if remote fetch didn't succeed
+    if (allItems.isEmpty) {
+      final cached = _hive.get<String>(cacheKey);
+      if (cached != null) {
+        try {
+          final List<dynamic> list = jsonDecode(cached);
+          allItems = list.map((e) => FollowUpModel.fromJson(Map<String, dynamic>.from(e))).toList();
+        } catch (_) {}
+      }
     }
 
-    // 3. Supplement with follow-ups scheduled inside real leads if cached follow-ups are empty
-    if (cachedList.isEmpty) {
-      try {
-        final rawLeads = _hive.get<String>('cached_leads_v4');
-        if (rawLeads != null) {
-          final List<dynamic> leads = jsonDecode(rawLeads);
-          for (final l in leads) {
-            final leadMap = Map<String, dynamic>.from(l);
-            final nextDate = leadMap['next_follow_up_date'] ?? leadMap['nextFollowUpDate'];
-            if (nextDate != null && nextDate.toString().isNotEmpty) {
-              final nextTime = leadMap['next_follow_up_time'] ?? leadMap['nextFollowUpTime'] ?? '11:00 AM';
-              DateTime scheduled;
-              try {
-                scheduled = DateTime.parse('$nextDate $nextTime');
-              } catch (_) {
-                try {
-                  scheduled = DateTime.parse(nextDate.toString());
-                } catch (_) {
-                  scheduled = DateTime.now().add(const Duration(days: 1));
-                }
-              }
+    // 3. Supplement with follow-ups scheduled inside real leads if not already present
+    try {
+      final rawLeads = _hive.get<String>('cached_leads_v4');
+      if (rawLeads != null) {
+        final List<dynamic> leads = jsonDecode(rawLeads);
+        final existingLeadIds = <String>{};
+        for (final item in allItems) {
+          if (item.leadId != null && item.leadId!.isNotEmpty) {
+            existingLeadIds.add(item.leadId!.toLowerCase());
+          }
+          existingLeadIds.add(item.restaurantName.toLowerCase().trim());
+        }
 
-              cachedList.add(
+        for (final l in leads) {
+          final leadMap = Map<String, dynamic>.from(l);
+          final leadId = (leadMap['id'] ?? '').toString();
+          final restName = (leadMap['restaurant_name'] ?? leadMap['restaurantName'] ?? '').toString();
+          final nextDate = leadMap['next_follow_up_date'] ?? leadMap['nextFollowUpDate'];
+
+          if (nextDate != null && nextDate.toString().isNotEmpty) {
+            final nextTime = leadMap['next_follow_up_time'] ?? leadMap['nextFollowUpTime'] ?? '11:00 AM';
+            final scheduled = _parseFlexibleDate(nextDate, nextTime);
+
+            if (!existingLeadIds.contains(leadId.toLowerCase()) && !existingLeadIds.contains(restName.toLowerCase().trim())) {
+              allItems.add(
                 FollowUpModel(
-                  id: 'flw_lead_${leadMap['id']}',
-                  leadId: leadMap['id']?.toString(),
+                  id: 'flw_lead_$leadId',
+                  leadId: leadId,
                   userId: effectiveUserId,
-                  restaurantName: leadMap['restaurant_name'] ?? leadMap['restaurantName'] ?? 'Restaurant Outlet',
-                  contactPerson: leadMap['contact_person_name'] ?? leadMap['contactPersonName'] ?? 'Owner',
+                  restaurantName: restName.isNotEmpty ? restName : 'Restaurant Outlet',
+                  contactPerson: leadMap['contact_person_name'] ?? leadMap['contactPersonName'] ?? leadMap['owner_name'] ?? 'Owner',
                   phone: leadMap['mobile'] ?? '',
                   address: '${leadMap['address'] ?? ''}, ${leadMap['city'] ?? ''}'.trim(),
                   followUpType: leadMap['next_follow_up_type'] ?? leadMap['nextFollowUpType'] ?? 'Restaurant Visit',
@@ -144,12 +183,15 @@ class FollowUpRepository {
             }
           }
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
+
+    // Sort chronologically
+    allItems.sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
 
     // 4. Calculate dynamic category counts
     int today = 0, upcoming = 0, overdue = 0, completed = 0;
-    for (final f in cachedList) {
+    for (final f in allItems) {
       if (f.status.toUpperCase() == 'COMPLETED') {
         completed++;
       } else {
@@ -160,9 +202,33 @@ class FollowUpRepository {
       }
     }
 
+    // 5. Filter list by tab and search
+    List<FollowUpModel> filtered = allItems;
+    final tabLower = tab.toLowerCase();
+    if (tabLower == 'today') {
+      filtered = allItems.where((f) => f.status.toUpperCase() != 'COMPLETED' && f.computedStatus == FollowUpStatus.today).toList();
+    } else if (tabLower == 'upcoming') {
+      filtered = allItems.where((f) => f.status.toUpperCase() != 'COMPLETED' && f.computedStatus == FollowUpStatus.upcoming).toList();
+    } else if (tabLower == 'overdue') {
+      filtered = allItems.where((f) => f.status.toUpperCase() != 'COMPLETED' && f.computedStatus == FollowUpStatus.overdue).toList();
+    } else if (tabLower == 'completed') {
+      filtered = allItems.where((f) => f.status.toUpperCase() == 'COMPLETED').toList();
+    }
+
+    if (search.trim().isNotEmpty) {
+      final q = search.trim().toLowerCase();
+      filtered = filtered.where((f) =>
+        f.restaurantName.toLowerCase().contains(q) ||
+        f.contactPerson.toLowerCase().contains(q) ||
+        f.address.toLowerCase().contains(q) ||
+        f.followUpType.toLowerCase().contains(q) ||
+        f.notes.toLowerCase().contains(q)
+      ).toList();
+    }
+
     return (
       counts: FollowUpCounts(today: today, upcoming: upcoming, overdue: overdue, completed: completed),
-      items: cachedList
+      items: filtered
     );
   }
 

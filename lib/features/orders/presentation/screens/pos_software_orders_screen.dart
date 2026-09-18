@@ -704,8 +704,11 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
           SizedBox(height: 10.h),
 
           // Implementation Status & Edit / Upgrade POS Status Action Buttons Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8.w,
+            runSpacing: 6.h,
             children: [
               TextButton.icon(
                 onPressed: () {
@@ -716,7 +719,7 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
                     ),
                   );
                 },
-                icon: Icon(Icons.alt_route_rounded, size: 15.sp, color: const Color(0xFFF97316)),
+                icon: Icon(Icons.alt_route_rounded, size: 14.sp, color: const Color(0xFFF97316)),
                 label: Text(
                   'Implementation Status',
                   style: TextStyle(
@@ -726,27 +729,28 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   backgroundColor: const Color(0xFFF97316).withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
-              SizedBox(width: 8.w),
               TextButton.icon(
                 onPressed: () => _showEditPosStatusModal(context, order, isDark),
-                icon: Icon(Icons.edit_note_rounded, size: 16.sp, color: AppColors.primary),
+                icon: Icon(Icons.edit_note_rounded, size: 15.sp, color: AppColors.primary),
                 label: Text(
                   'Edit / Upgrade POS Status',
                   style: TextStyle(
-                    fontSize: 11.5.sp,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   backgroundColor: AppColors.primary.withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
             ],

@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constants/colors.dart';
-import '../../../../core/di/service_locator.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../app/theme_config.dart';
+import '../../../leads/presentation/providers/lead_providers.dart';
+import '../../../visits/presentation/providers/visit_providers.dart';
+import '../../../orders/presentation/providers/pos_order_providers.dart';
+import '../../../targets/presentation/providers/target_providers.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -15,39 +17,7 @@ class ReportsScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
-  int _selectedPeriod = 1; // 0: This Week, 1: This Month, 2: Quarter (Q3), 3: Year
-  int _totalVisits = 48;
-  int _pitchesDone = 34;
-  int _quotationsSent = 22;
-  int _dealsClosed = 14;
-  double _commissionEarned = 12450.0;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchAnalytics();
-  }
-
-  Future<void> _fetchAnalytics() async {
-    setState(() => _isLoading = true);
-    try {
-      final apiClient = getIt<ApiClient>();
-      final response = await apiClient.get('/api/analytics/dashboard');
-      if (response.statusCode == 200 && response.data != null && response.data['success'] == true) {
-        final data = response.data['data'];
-        setState(() {
-          _totalVisits = data['today_team_visits_completed'] ?? data['total_visits'] ?? data['today_visits_completed'] ?? 48;
-          _dealsClosed = data['completed_tasks'] ?? data['completed_tasks_count'] ?? data['total_system_tasks'] ?? 14;
-          final earned = (data['monthly_closed_revenue'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
-          _commissionEarned = double.tryParse(earned) ?? 12450.0;
-          _quotationsSent = data['completed_tasks_count'] ?? data['completed_tasks'] ?? 22;
-          _pitchesDone = data['today_team_visits_target'] ?? 34;
-        });
-      }
-    } catch (_) {}
-    setState(() => _isLoading = false);
-  }
+  int _selectedPeriod = 1; // 0: This Week, 1: This Month, 2: Quarter, 3: Year
 
   String _t(String key, String langCode) {
     final Map<String, Map<String, String>> translations = {
@@ -64,7 +34,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         'target_vs': 'vs last month',
         'demo_rate': 'Demo Rate',
         'conversion': 'Conversion',
-        'commission': 'Earned Commission',
+        'commission': 'Total Deal Value',
       },
       'hi': {
         'title': 'बिक्री प्रदर्शन और रिपोर्ट',
@@ -79,7 +49,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         'target_vs': 'पिछले महीने की तुलना में',
         'demo_rate': 'डेमो दर',
         'conversion': 'रूपांतरण दर',
-        'commission': 'अर्जित कमीशन',
+        'commission': 'कुल सौदा मूल्य',
       },
       'gu': {
         'title': 'વેચાણ પ્રદર્શન અને અહેવાલો',
@@ -94,7 +64,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         'target_vs': 'ગયા મહિનાની સરખામણીએ',
         'demo_rate': 'ડેમો દર',
         'conversion': 'રૂપાંતરણ દર',
-        'commission': 'કમિશન કમાણી',
+        'commission': 'કુલ ડીલ મૂલ્ય',
       }
     };
 
@@ -102,12 +72,47 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     return lang[key] ?? key;
   }
 
-  final List<Map<String, dynamic>> _funnelSteps = [
-    {'title': 'Total Visits', 'count': 48, 'percent': 1.0, 'color': const Color(0xFF6366F1)},
-    {'title': 'Demos Presented', 'count': 34, 'percent': 0.71, 'color': const Color(0xFF3B82F6)},
-    {'title': 'Quotations Sent', 'count': 22, 'percent': 0.46, 'color': const Color(0xFFF59E0B)},
-    {'title': 'Deals Closed', 'count': 14, 'percent': 0.29, 'color': const Color(0xFF10B981)},
-  ];
+  DateTime? _parseFlexibleDate(String? dateStr) {
+    if (dateStr == null || dateStr.trim().isEmpty) return null;
+    final s = dateStr.trim();
+    if (s.contains('/') || s.contains('-')) {
+      final delim = s.contains('/') ? '/' : '-';
+      final parts = s.split(delim);
+      if (parts.length == 3) {
+        if (parts[0].length == 4) {
+          final y = int.tryParse(parts[0]);
+          final m = int.tryParse(parts[1]);
+          final d = int.tryParse(parts[2].split(' ')[0]);
+          if (y != null && m != null && d != null) return DateTime(y, m, d);
+        } else {
+          final d = int.tryParse(parts[0]);
+          final m = int.tryParse(parts[1]);
+          final y = int.tryParse(parts[2].split(' ')[0]);
+          if (y != null && m != null && d != null) return DateTime(y, m, d);
+        }
+      }
+    }
+    return DateTime.tryParse(s);
+  }
+
+  bool _isWithinPeriod(DateTime? dt, int periodIndex) {
+    if (dt == null) return true;
+    final now = DateTime.now();
+    if (periodIndex == 0) {
+      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      final start = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+      final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      return dt.isAfter(start.subtract(const Duration(seconds: 1))) && dt.isBefore(end.add(const Duration(days: 7)));
+    } else if (periodIndex == 1) {
+      return dt.year == now.year && dt.month == now.month;
+    } else if (periodIndex == 2) {
+      final currentQuarter = (now.month - 1) ~/ 3;
+      final dtQuarter = (dt.month - 1) ~/ 3;
+      return dt.year == now.year && dtQuarter == currentQuarter;
+    } else {
+      return dt.year == now.year;
+    }
+  }
 
   void _exportReport(String format) {
     HapticFeedback.mediumImpact();
@@ -135,6 +140,120 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final langCode = ref.watch(localeProvider).languageCode;
+
+    final leadsAsync = ref.watch(leadListProvider);
+    final visitsAsync = ref.watch(visitListProvider);
+    final posOrdersAsync = ref.watch(posSoftwareOrderListProvider);
+    final targetAsync = ref.watch(myMonthlyTargetProvider);
+
+    final allLeads = leadsAsync.valueOrNull ?? [];
+    final allVisits = visitsAsync.valueOrNull ?? [];
+    final allPosOrders = posOrdersAsync.valueOrNull ?? [];
+    final myTarget = targetAsync.valueOrNull;
+
+    // Filter by period
+    final periodLeads = allLeads.where((l) => _isWithinPeriod(_parseFlexibleDate(l.createdAt), _selectedPeriod)).toList();
+    final periodVisits = allVisits.where((v) => _isWithinPeriod(_parseFlexibleDate(v.startTime), _selectedPeriod)).toList();
+    final periodPosOrders = allPosOrders.where((p) => _isWithinPeriod(_parseFlexibleDate(p.createdAt), _selectedPeriod)).toList();
+
+    final totalVisits = periodVisits.length;
+    final pitchesDone = periodVisits.where((v) => v.demoGiven || v.productsDiscussed.isNotEmpty).length +
+        periodLeads.where((l) => l.demoRequired || l.status.toLowerCase().contains('demo')).length;
+    final quotationsSent = periodLeads.where((l) =>
+        l.proposalRequired ||
+        l.status.toLowerCase().contains('proposal') ||
+        l.status.toLowerCase().contains('quotation') ||
+        l.status.toLowerCase().contains('negotiation') ||
+        l.status.toLowerCase().contains('won')).length;
+
+    // Closed deals (deduplicated)
+    final wonLeadIds = <String>{};
+    for (final l in periodLeads) {
+      if (l.status.toLowerCase() == 'won' || l.posSoftware.toLowerCase() == 'paid') {
+        wonLeadIds.add(l.id.toLowerCase());
+      }
+    }
+    for (final p in periodPosOrders) {
+      if (p.isPaid) {
+        wonLeadIds.add((p.leadId.isNotEmpty ? p.leadId : p.id).toLowerCase());
+      }
+    }
+    final dealsClosed = wonLeadIds.isNotEmpty ? wonLeadIds.length : (myTarget?.completedLeads ?? 0);
+
+    // Commission / Revenue
+    double closedRevenue = 0.0;
+    for (final l in periodLeads) {
+      if (l.status.toLowerCase() == 'won' || l.posSoftware.toLowerCase() == 'paid') {
+        closedRevenue += (l.posAmount > 0 ? l.posAmount : (l.estimatedDealValue > 0 ? l.estimatedDealValue : 0.0));
+      }
+    }
+    for (final p in periodPosOrders) {
+      if (p.isPaid && p.amount > 0) {
+        closedRevenue += p.amount;
+      }
+    }
+
+    final demoRateStr = totalVisits > 0 ? '${((pitchesDone / totalVisits) * 100).clamp(0, 100).toInt()}%' : '0%';
+    final conversionStr = pitchesDone > 0 ? '${((dealsClosed / pitchesDone) * 100).clamp(0, 100).toInt()}%' : (totalVisits > 0 ? '${((dealsClosed / totalVisits) * 100).clamp(0, 100).toInt()}%' : '0%');
+    final winRateDouble = totalVisits > 0 ? (dealsClosed / totalVisits * 100) : (pitchesDone > 0 ? (dealsClosed / pitchesDone * 100) : 0.0);
+
+    final funnelSteps = [
+      {
+        'title': 'Total Visits',
+        'count': totalVisits,
+        'percent': totalVisits > 0 ? 1.0 : 0.0,
+        'color': const Color(0xFF6366F1),
+      },
+      {
+        'title': 'Demos Presented',
+        'count': pitchesDone,
+        'percent': totalVisits > 0 ? (pitchesDone / totalVisits).clamp(0.0, 1.0) : (pitchesDone > 0 ? 1.0 : 0.0),
+        'color': const Color(0xFF3B82F6),
+      },
+      {
+        'title': 'Quotations Sent',
+        'count': quotationsSent,
+        'percent': totalVisits > 0 ? (quotationsSent / totalVisits).clamp(0.0, 1.0) : (quotationsSent > 0 ? 1.0 : 0.0),
+        'color': const Color(0xFFF59E0B),
+      },
+      {
+        'title': 'Deals Closed',
+        'count': dealsClosed,
+        'percent': totalVisits > 0 ? (dealsClosed / totalVisits).clamp(0.0, 1.0) : (dealsClosed > 0 ? 1.0 : 0.0),
+        'color': const Color(0xFF10B981),
+      },
+    ];
+
+    // Cuisine / Segment Distribution
+    final Map<String, int> segmentCounts = {};
+    for (final l in periodLeads) {
+      final key = l.cuisine.trim().isNotEmpty ? l.cuisine.trim() : (l.businessType.trim().isNotEmpty ? l.businessType.trim() : 'General Restaurant');
+      segmentCounts[key] = (segmentCounts[key] ?? 0) + 1;
+    }
+    final totalSegments = segmentCounts.values.fold(0, (a, b) => a + b);
+
+    final List<Map<String, dynamic>> cuisines = [];
+    final colors = [const Color(0xFF6366F1), const Color(0xFFF59E0B), const Color(0xFF10B981), const Color(0xFFEC4899)];
+    int colorIdx = 0;
+    if (totalSegments > 0) {
+      segmentCounts.forEach((name, count) {
+        final pct = ((count / totalSegments) * 100).toInt();
+        cuisines.add({
+          'name': name,
+          'percent': '$pct%',
+          'color': colors[colorIdx % colors.length],
+        });
+        colorIdx++;
+      });
+    } else {
+      cuisines.addAll([
+        {'name': 'Fine Dine & Multi-Cuisine', 'percent': '0%', 'color': const Color(0xFF6366F1)},
+        {'name': 'Cafes & Bakeries', 'percent': '0%', 'color': const Color(0xFFF59E0B)},
+        {'name': 'QSR & Fast Food', 'percent': '0%', 'color': const Color(0xFF10B981)},
+      ]);
+    }
+
+    final isLoading = leadsAsync.isLoading && visitsAsync.isLoading && allLeads.isEmpty && allVisits.isEmpty;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF8F9FE),
@@ -166,88 +285,116 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Period Filter Selector
-            _buildPeriodSelector(isDark),
+              padding: EdgeInsets.all(20.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Period Filter Selector
+                  _buildPeriodSelector(isDark),
 
-            SizedBox(height: 16.h),
+                  SizedBox(height: 16.h),
 
-            // Top 4 Metric KPI Cards
-            Row(
-              children: [
-                _buildKpiCard(_t('totalVisits', langCode), _totalVisits.toString(), '+12% ${_t('target_vs', langCode)}', Icons.location_on_rounded, const Color(0xFF6366F1), isDark),
-                SizedBox(width: 12.w),
-                _buildKpiCard(_t('pitchesDone', langCode), _pitchesDone.toString(), '71% ${_t('demo_rate', langCode)}', Icons.record_voice_over_rounded, const Color(0xFF3B82F6), isDark),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                _buildKpiCard(_t('quotationsSent', langCode), _quotationsSent.toString(), '64.7% ${_t('conversion', langCode)}', Icons.receipt_long_rounded, const Color(0xFFF59E0B), isDark),
-                SizedBox(width: 12.w),
-                _buildKpiCard(_t('dealsClosed', langCode), _dealsClosed.toString(), '₹ ${_commissionEarned.toStringAsFixed(0)} ${_t('commission', langCode)}', Icons.monetization_on_rounded, const Color(0xFF10B981), isDark),
-              ],
-            ),
-
-            SizedBox(height: 24.h),
-
-            // Sales Conversion Funnel
-            _buildFunnelCard(isDark),
-
-            SizedBox(height: 24.h),
-
-            // Cuisine Category Distribution
-            _buildCuisineDistribution(isDark),
-
-            SizedBox(height: 24.h),
-
-            // Export Actions Row
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      side: const BorderSide(color: AppColors.primary),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                    ),
-                    onPressed: () => _exportReport('pdf'),
-                    icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red),
-                    label: const Text('Export PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+                  // Top 4 Metric KPI Cards
+                  Row(
+                    children: [
+                      _buildKpiCard(
+                        _t('totalVisits', langCode),
+                        totalVisits.toString(),
+                        totalVisits > 0 ? '+$totalVisits visits' : '0 visits',
+                        Icons.location_on_rounded,
+                        const Color(0xFF6366F1),
+                        isDark,
+                      ),
+                      SizedBox(width: 12.w),
+                      _buildKpiCard(
+                        _t('pitchesDone', langCode),
+                        pitchesDone.toString(),
+                        '$demoRateStr ${_t('demo_rate', langCode)}',
+                        Icons.record_voice_over_rounded,
+                        const Color(0xFF3B82F6),
+                        isDark,
+                      ),
+                    ],
                   ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                    ),
-                    onPressed: () => _exportReport('xlsx'),
-                    icon: const Icon(Icons.table_chart_rounded),
-                    label: const Text('Export Excel', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      _buildKpiCard(
+                        _t('quotationsSent', langCode),
+                        quotationsSent.toString(),
+                        '$conversionStr ${_t('conversion', langCode)}',
+                        Icons.receipt_long_rounded,
+                        const Color(0xFFF59E0B),
+                        isDark,
+                      ),
+                      SizedBox(width: 12.w),
+                      _buildKpiCard(
+                        _t('dealsClosed', langCode),
+                        dealsClosed.toString(),
+                        '₹ ${closedRevenue.toStringAsFixed(0)}',
+                        Icons.monetization_on_rounded,
+                        const Color(0xFF10B981),
+                        isDark,
+                      ),
+                    ],
                   ),
-                ),
-              ],
+
+                  SizedBox(height: 24.h),
+
+                  // Sales Conversion Funnel
+                  _buildFunnelCard(isDark, funnelSteps, winRateDouble),
+
+                  SizedBox(height: 24.h),
+
+                  // Cuisine Category Distribution
+                  _buildCuisineDistribution(isDark, cuisines),
+
+                  SizedBox(height: 24.h),
+
+                  // Export Actions Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 14.h),
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          ),
+                          onPressed: () => _exportReport('pdf'),
+                          icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red),
+                          label: const Text('Export PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 14.h),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          ),
+                          onPressed: () => _exportReport('xlsx'),
+                          icon: const Icon(Icons.table_chart_rounded),
+                          label: const Text('Export Excel', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20.h),
+                ],
+              ),
             ),
-            SizedBox(height: 20.h),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildPeriodSelector(bool isDark) {
-    final periods = ['This Week', 'This Month', 'Quarter (Q3)', 'This Year'];
+    final periods = ['This Week', 'This Month', 'Quarter', 'This Year'];
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
@@ -362,7 +509,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildFunnelCard(bool isDark) {
+  Widget _buildFunnelCard(bool isDark, List<Map<String, dynamic>> funnelSteps, double winRate) {
     return Container(
       padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(
@@ -397,16 +544,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   color: const Color(0xFF10B981).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
-                child: const Text(
-                  '29.2% Win Rate',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                child: Text(
+                  '${winRate.toStringAsFixed(1)}% Win Rate',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
                 ),
               ),
             ],
           ),
           SizedBox(height: 16.h),
-          ...List.generate(_funnelSteps.length, (index) {
-            final step = _funnelSteps[index];
+          ...List.generate(funnelSteps.length, (index) {
+            final step = funnelSteps[index];
             final color = step['color'] as Color;
             final percent = step['percent'] as double;
             final count = step['count'] as int;
@@ -448,13 +595,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildCuisineDistribution(bool isDark) {
-    final cuisines = [
-      {'name': 'Fine Dine & Multi-Cuisine', 'percent': '45%', 'color': const Color(0xFF6366F1)},
-      {'name': 'Cafes & Bakeries', 'percent': '30%', 'color': const Color(0xFFF59E0B)},
-      {'name': 'QSR & Fast Food', 'percent': '25%', 'color': const Color(0xFF10B981)},
-    ];
-
+  Widget _buildCuisineDistribution(bool isDark, List<Map<String, dynamic>> cuisines) {
     return Container(
       padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(

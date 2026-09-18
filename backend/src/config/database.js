@@ -35,6 +35,63 @@ function loadLocalStore() {
   }
 }
 
+function parseFlexibleDateTime(dateVal, timeVal) {
+  if (!dateVal) return new Date().toISOString();
+  let dateStr = String(dateVal).trim();
+  let timeStr = (timeVal && String(timeVal).trim().length > 0) ? String(timeVal).trim() : '11:00 AM';
+
+  if (dateStr.includes('T')) {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+
+  let hour = 11;
+  let minute = 0;
+  const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (timeMatch) {
+    hour = parseInt(timeMatch[1], 10) || 11;
+    minute = parseInt(timeMatch[2], 10) || 0;
+    const ampm = (timeMatch[3] || '').toUpperCase();
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+  }
+
+  if (dateStr.includes(' ')) {
+    const parts = dateStr.split(' ');
+    dateStr = parts[0];
+  }
+
+  let y, m, d;
+  if (dateStr.includes('/') || dateStr.includes('-')) {
+    const delim = dateStr.includes('/') ? '/' : '-';
+    const parts = dateStr.split(delim);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        y = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10) - 1;
+        d = parseInt(parts[2], 10);
+      } else {
+        d = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10) - 1;
+        y = parseInt(parts[2], 10);
+      }
+      const parsedDate = new Date(Date.UTC(y, m, d, hour, minute));
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString();
+      }
+    }
+  }
+
+  const fallback = new Date(dateStr);
+  if (!isNaN(fallback.getTime())) {
+    return fallback.toISOString();
+  }
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString();
+}
+
 async function initDatabase() {
   loadLocalStore();
 
@@ -1621,23 +1678,14 @@ const db = {
     // Auto-create initial follow-up record if next_follow_up_date is set
     if (newLead.next_follow_up_date) {
       try {
-        let scheduledTimeStr = newLead.next_follow_up_date;
-        if (newLead.next_follow_up_time) {
-          scheduledTimeStr = `${newLead.next_follow_up_date} ${newLead.next_follow_up_time}`;
-        }
-        let scheduledIso;
-        try {
-          scheduledIso = new Date(scheduledTimeStr).toISOString();
-        } catch (_) {
-          scheduledIso = new Date().toISOString();
-        }
+        const scheduledIso = parseFlexibleDateTime(newLead.next_follow_up_date, newLead.next_follow_up_time);
 
         await this.createFollowUp({
           id: `flw_lead_${newLead.id}`,
           lead_id: newLead.id,
           user_id: newLead.assigned_salesperson_id || newLead.created_by_id || 'usr_salesexecutive_prince',
           restaurant_name: newLead.restaurant_name || newLead.restaurantName || 'New Restaurant',
-          contact_person: newLead.contact_person_name || newLead.contactPersonName || 'Owner',
+          contact_person: newLead.contact_person_name || newLead.contactPersonName || newLead.owner_name || 'Owner',
           phone: newLead.mobile || '',
           address: `${newLead.address || ''} ${newLead.city || ''}`.trim(),
           follow_up_type: newLead.next_follow_up_type || 'Restaurant Visit',
@@ -1705,11 +1753,16 @@ const db = {
   // =========================================================================
   async getPosSoftwareOrders(filter = {}) {
     if (isPostgres && pool) {
+      // Clean any potential duplicate legacy records in pos_software_orders table
+      try {
+        await pool.query(`DELETE FROM pos_software_orders a USING pos_software_orders b WHERE a.ctid < b.ctid AND a.lead_id = b.lead_id AND a.lead_id IS NOT NULL`);
+      } catch (_) {}
+
       const queryStr = `
-        SELECT 
+        SELECT DISTINCT ON (COALESCE(pso.lead_id, l.id, pso.id))
           COALESCE(pso.id, 'pos_' || l.id) AS id,
-          l.id AS lead_id,
-          l.restaurant_name,
+          COALESCE(pso.lead_id, l.id) AS lead_id,
+          COALESCE(pso.restaurant_name, l.restaurant_name) AS restaurant_name,
           COALESCE(pso.contact_person, l.contact_person_name, l.owner_name, '') AS contact_person,
           COALESCE(pso.contact_phone, l.mobile, '') AS contact_phone,
           COALESCE(pso.location, TRIM(CONCAT(COALESCE(l.area, ''), ' ', COALESCE(l.city, ''))), 'Ahmedabad') AS location,
@@ -1724,20 +1777,40 @@ const db = {
           COALESCE(pso.updated_at, l.updated_at, NOW()) AS updated_at
         FROM leads l
         LEFT JOIN pos_software_orders pso ON l.id = pso.lead_id
-        LEFT JOIN users u_exec ON (l.assigned_salesperson_id = u_exec.id OR l.created_by_id = u_exec.id OR pso.assigned_executive_id = u_exec.id)
+        LEFT JOIN users u_exec ON u_exec.id = COALESCE(NULLIF(pso.assigned_executive_id, ''), NULLIF(l.assigned_salesperson_id, ''), l.created_by_id)
         LEFT JOIN users u_mgr ON u_exec.manager_id = u_mgr.id
-        ORDER BY COALESCE(pso.created_at, l.created_at) DESC
+        ORDER BY COALESCE(pso.lead_id, l.id, pso.id), COALESCE(pso.created_at, l.created_at) DESC
       `;
       const res = await pool.query(queryStr);
-      return res.rows.map(r => ({
+      const rows = res.rows.map(r => ({
         ...r,
         amount: parseFloat(r.amount) || 0.0,
         pos_type: (r.pos_type || 'Free').toString().toUpperCase() === 'PAID' ? 'Paid' : 'Free'
-      }));
+      })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      const unique = [];
+      const seen = new Set();
+      for (const item of rows) {
+        const key = (item.lead_id || item.id || item.restaurant_name).toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(item);
+        }
+      }
+      return unique;
     }
 
     if (!localStore.pos_software_orders) localStore.pos_software_orders = [];
-    return localStore.pos_software_orders;
+    const unique = [];
+    const seen = new Set();
+    for (const item of localStore.pos_software_orders) {
+      const key = (item.lead_id || item.id || item.restaurant_name).toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(item);
+      }
+    }
+    return unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   },
 
   async getPosSoftwareOrderById(id) {
@@ -1776,10 +1849,11 @@ const db = {
     let managerId = order.assigned_manager_id || order.assignedManagerId || null;
     let execName = order.assigned_executive_name || order.assignedExecutiveName || '';
     let mgrName = order.assigned_manager_name || order.assignedManagerName || '';
- 
+    let orderId = order.id || `pos_ord_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+
     if (isPostgres && pool) {
       if (leadId) {
-        const leadCheck = await pool.query('SELECT id, restaurant_name, contact_person_name, mobile, area, city, assigned_salesperson_id, assigned_salesperson FROM leads WHERE id = $1', [leadId]);
+        const leadCheck = await pool.query('SELECT id, restaurant_name, contact_person_name, owner_name, mobile, area, city, assigned_salesperson_id, assigned_salesperson FROM leads WHERE id = $1', [leadId]);
         if (leadCheck.rows.length === 0) {
           leadId = null;
         } else {
@@ -1787,10 +1861,22 @@ const db = {
           if (!order.restaurant_name && !order.restaurantName) {
             order.restaurant_name = lRow.restaurant_name;
           }
+          if (!order.contact_person && !order.contactPerson) {
+            order.contact_person = lRow.contact_person_name || lRow.owner_name || '';
+          }
+          if (!order.contact_phone && !order.contactPhone) {
+            order.contact_phone = lRow.mobile || '';
+          }
           if (!executiveId) {
             executiveId = lRow.assigned_salesperson_id;
             execName = lRow.assigned_salesperson;
           }
+        }
+
+        // Check if an existing POS software order exists for this lead_id
+        const existingPso = await pool.query('SELECT id FROM pos_software_orders WHERE lead_id = $1', [leadId]);
+        if (existingPso.rows.length > 0) {
+          orderId = existingPso.rows[0].id;
         }
       }
       if (executiveId) {
@@ -1819,6 +1905,12 @@ const db = {
           if (!order.restaurant_name && !order.restaurantName) {
             order.restaurant_name = l.restaurant_name;
           }
+          if (!order.contact_person && !order.contactPerson) {
+            order.contact_person = l.contact_person_name || l.owner_name || '';
+          }
+          if (!order.contact_phone && !order.contactPhone) {
+            order.contact_phone = l.mobile || '';
+          }
           if (!executiveId) {
             executiveId = l.assigned_salesperson_id;
             execName = l.assigned_salesperson;
@@ -1843,7 +1935,7 @@ const db = {
     }
  
     const newOrder = {
-      id: order.id || `pos_ord_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
+      id: orderId,
       lead_id: leadId || null,
       restaurant_name: order.restaurant_name || order.restaurantName || 'Restaurant',
       contact_person: order.contact_person || order.contactPerson || '',
@@ -1947,9 +2039,10 @@ const db = {
     }
 
     if (!localStore.pos_software_orders) localStore.pos_software_orders = [];
-    const idx = localStore.pos_software_orders.findIndex(p => p.id === newOrder.id || p.lead_id === newOrder.lead_id);
+    const idx = localStore.pos_software_orders.findIndex(p => (newOrder.lead_id && p.lead_id === newOrder.lead_id) || p.id === newOrder.id);
     if (idx !== -1) {
-      localStore.pos_software_orders[idx] = newOrder;
+      newOrder.id = localStore.pos_software_orders[idx].id;
+      localStore.pos_software_orders[idx] = { ...localStore.pos_software_orders[idx], ...newOrder };
     } else {
       localStore.pos_software_orders.unshift(newOrder);
     }
@@ -2565,12 +2658,67 @@ const db = {
 
       queryStr += ' ORDER BY scheduled_time ASC';
       const res = await pool.query(queryStr, params);
-      return res.rows;
+      const followUps = [...res.rows];
+
+      // Also ensure leads with next_follow_up_date are included if not present
+      try {
+        const leadsRes = await pool.query(`SELECT id, restaurant_name, contact_person_name, owner_name, mobile, address, city, area, priority, assigned_salesperson_id, assigned_salesperson, created_by_id, created_by, next_follow_up_date, next_follow_up_time, next_follow_up_type, follow_up_notes FROM leads WHERE next_follow_up_date IS NOT NULL AND next_follow_up_date != ''`);
+        const existingLeadIds = new Set(followUps.map(f => f.lead_id).filter(Boolean));
+        for (const l of leadsRes.rows) {
+          if (!existingLeadIds.has(l.id)) {
+            const scheduledIso = parseFlexibleDateTime(l.next_follow_up_date, l.next_follow_up_time);
+            followUps.push({
+              id: `flw_lead_${l.id}`,
+              lead_id: l.id,
+              user_id: l.assigned_salesperson_id || l.created_by_id || 'usr_salesexecutive_prince',
+              restaurant_name: l.restaurant_name,
+              contact_person: l.contact_person_name || l.owner_name || 'Owner',
+              phone: l.mobile || '',
+              address: `${l.address || ''} ${l.city || ''}`.trim(),
+              follow_up_type: l.next_follow_up_type || 'Restaurant Visit',
+              priority: l.priority || 'Medium',
+              status: 'PENDING',
+              scheduled_time: scheduledIso,
+              notes: l.follow_up_notes || 'Follow-up scheduled from lead creation',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          }
+        }
+      } catch (_) {}
+
+      return followUps.sort((a, b) => new Date(a.scheduled_time) - new Date(b.scheduled_time));
     }
 
     if (!localStore.follow_ups) localStore.follow_ups = [];
 
-    return localStore.follow_ups.filter(f => {
+    const followUps = [...localStore.follow_ups];
+    if (localStore.leads) {
+      const existingLeadIds = new Set(followUps.map(f => f.lead_id).filter(Boolean));
+      for (const l of localStore.leads) {
+        if (l.next_follow_up_date && !existingLeadIds.has(l.id)) {
+          const scheduledIso = parseFlexibleDateTime(l.next_follow_up_date, l.next_follow_up_time);
+          followUps.push({
+            id: `flw_lead_${l.id}`,
+            lead_id: l.id,
+            user_id: l.assigned_salesperson_id || l.created_by_id || 'usr_salesexecutive_prince',
+            restaurant_name: l.restaurant_name,
+            contact_person: l.contact_person_name || l.owner_name || 'Owner',
+            phone: l.mobile || '',
+            address: `${l.address || ''} ${l.city || ''}`.trim(),
+            follow_up_type: l.next_follow_up_type || 'Restaurant Visit',
+            priority: l.priority || 'Medium',
+            status: 'PENDING',
+            scheduled_time: scheduledIso,
+            notes: l.follow_up_notes || 'Follow-up scheduled from lead creation',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        }
+      }
+    }
+
+    return followUps.filter(f => {
       if (filter.user_id) {
         const uId = String(filter.user_id).trim();
         const isPrince = (uId === 'usr_salesexecutive_prince' || uId === 'usr_exec_006' || uId === 'EMP006');
@@ -2603,14 +2751,7 @@ const db = {
   },
 
   async createFollowUp(item) {
-    let scheduledIso = new Date().toISOString();
-    if (item.scheduled_date) {
-      const timePart = (item.scheduled_time && item.scheduled_time.includes(':')) ? item.scheduled_time : '11:00';
-      scheduledIso = new Date(`${item.scheduled_date}T${timePart}:00`).toISOString();
-    } else if (item.scheduled_time || item.scheduledTime) {
-      const raw = item.scheduled_time || item.scheduledTime;
-      scheduledIso = raw.includes('T') ? raw : new Date().toISOString();
-    }
+    const scheduledIso = parseFlexibleDateTime(item.scheduled_date || item.scheduled_time || item.scheduledTime, item.scheduled_time || item.scheduledTime);
 
     const newItem = {
       id: item.id || `flw_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`,

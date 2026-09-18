@@ -125,17 +125,7 @@ class _LeadDetailScreenState extends ConsumerState<LeadDetailScreen> {
     }
   }
 
-  String _formatCurrency(double amount) {
-    if (amount <= 0) return '₹0';
-    if (amount >= 10000000) {
-      return '₹${(amount / 10000000).toStringAsFixed(2)} Cr';
-    } else if (amount >= 100000) {
-      return '₹${(amount / 100000).toStringAsFixed(1)} L';
-    } else if (amount >= 1000) {
-      return '₹${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d+?)(?=(\d\d)+(\d)(?!\d))'), (m) => '${m[1]},')}';
-    }
-    return '₹${amount.toStringAsFixed(0)}';
-  }
+
 
   Color _getStatusBgColor(String status, bool isDark) {
     switch (status.toUpperCase()) {
@@ -432,12 +422,8 @@ class _LeadDetailScreenState extends ConsumerState<LeadDetailScreen> {
           _buildDetailRow('Owner / Contact', contactName, isDark),
           _buildDetailRow('Contact Number', _currentLead.mobile, isDark),
           _buildDetailRow('Alternate Phone', _currentLead.alternateMobile.isNotEmpty ? _currentLead.alternateMobile : 'N/A', isDark),
-          _buildDetailRow('Email Address', _currentLead.email.isNotEmpty ? _currentLead.email : 'N/A', isDark),
           _buildDetailRow('Assigned Representative', assignedRep, isDark),
-          _buildDetailRow('Estimated Deal Value', _formatCurrency(_currentLead.estimatedDealValue), isDark),
-          _buildDetailRow('POS System Status', '${_currentLead.posSoftware} POS (${_formatCurrency(_currentLead.posAmount)})', isDark),
           _buildDetailRow('Current POS Software', _currentLead.currentPos.isNotEmpty ? _currentLead.currentPos : 'Manual Cash', isDark),
-          _buildDetailRow('Seating & Outlets', '${_currentLead.seatingCapacity} seats • ${_currentLead.numOutlets} Outlet(s)', isDark),
           _buildDetailRow(
             'Priority Level',
             _currentLead.priority.toLowerCase().contains('priority') || _currentLead.priority.toLowerCase().contains('interested')

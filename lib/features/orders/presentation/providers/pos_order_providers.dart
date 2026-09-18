@@ -23,7 +23,16 @@ class PosSoftwareOrderListNotifier extends StateNotifier<AsyncValue<List<PosSoft
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is String ? jsonDecode(response.data) : response.data;
         final rawList = (body['data'] as List<dynamic>?) ?? [];
-        final orders = rawList.map((e) => PosSoftwareOrderModel.fromJson(e as Map<String, dynamic>)).toList();
+        final seenKeys = <String>{};
+        final List<PosSoftwareOrderModel> orders = [];
+        for (final item in rawList) {
+          final model = PosSoftwareOrderModel.fromJson(item as Map<String, dynamic>);
+          final key = (model.leadId.isNotEmpty ? model.leadId : model.id).toLowerCase();
+          if (!seenKeys.contains(key)) {
+            seenKeys.add(key);
+            orders.add(model);
+          }
+        }
         state = AsyncValue.data(orders);
       } else {
         throw Exception('Failed to load POS software orders');
