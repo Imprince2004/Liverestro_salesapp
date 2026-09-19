@@ -164,351 +164,274 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       timeGreeting = 'Good evening,';
     }
 
+    final roleLabel = isManager ? 'Sales Manager' : 'Sales Executive';
+
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F0D1B) : const Color(0xFFF8F9FC),
+      backgroundColor: isDark ? const Color(0xFF0F0D1B) : const Color(0xFFF2F4F8),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
+            // ── REDESIGNED GRADIENT HEADER ──
             Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(
-                16.w,
-                topPadding + (isManager ? 24.h : 10.h),
-                16.w,
-                isManager ? 24.h : 16.h,
-              ),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF281F33) : const Color(0xFF714B67),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(28.r),
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF3A1F40), const Color(0xFF281F33)]
+                      : [const Color(0xFF714B67), const Color(0xFF9D6A8D)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
+                    color: const Color(0xFF714B67).withValues(alpha: isDark ? 0.4 : 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Greeting & Actions Row
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Greeting & Name Column on Left
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              timeGreeting,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withValues(alpha: 0.85),
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-
-                      // Theme Switcher Button
-                      GestureDetector(
-                        onTap: () => ref.read(themeModeProvider.notifier).toggleTheme(),
-                        child: Container(
-                          padding: EdgeInsets.all(8.5.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isDark ? Icons.light_mode_rounded : Icons.nightlight_round,
-                            color: Colors.white,
-                            size: 17.sp,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-
-                      // Notifications Bell with Live Counter Badge
-                      GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const NotificationHubScreen(),
-                          ),
-                        ),
-                        child: Container(
-                          padding: EdgeInsets.all(8.5.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Stack(
-                            clipBehavior: Clip.none,
+                  // Greeting row + controls
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(20.w, topPadding + 16.h, 16.w, 0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.notifications_outlined,
-                                color: Colors.white,
-                                size: 19.sp,
+                              Text(
+                                timeGreeting,
+                                style: TextStyle(
+                                  fontSize: 12.5.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
                               ),
-                              if (unreadNotifCount > 0)
-                                Positioned(
-                                  right: -3,
-                                  top: -3,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 4.5.w, vertical: 1.5.h),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEF4444),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: isDark ? const Color(0xFF281F33) : const Color(0xFF714B67),
-                                        width: 1.5,
-                                      ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              SizedBox(height: 5.h),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 3.5.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.verified_rounded, size: 11.sp, color: const Color(0xFFFCD34D)),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      roleLabel,
+                                      style: TextStyle(fontSize: 10.5.sp, fontWeight: FontWeight.w600, color: Colors.white),
                                     ),
-                                    constraints: BoxConstraints(minWidth: 14.w, minHeight: 14.w),
-                                    child: Center(
-                                      child: Text(
-                                        unreadNotifCount > 9 ? '9+' : '$unreadNotifCount',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 8.5.sp,
-                                          fontWeight: FontWeight.bold,
-                                          height: 1,
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        // Theme toggle
+                        GestureDetector(
+                          onTap: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+                          child: Container(
+                            padding: EdgeInsets.all(9.w),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
+                            child: Icon(isDark ? Icons.light_mode_rounded : Icons.nightlight_round, color: Colors.white, size: 18.sp),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        // Notifications bell
+                        GestureDetector(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationHubScreen())),
+                          child: Container(
+                            padding: EdgeInsets.all(9.w),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(Icons.notifications_outlined, color: Colors.white, size: 20.sp),
+                                if (unreadNotifCount > 0)
+                                  Positioned(
+                                    right: -4, top: -4,
+                                    child: Container(
+                                      padding: EdgeInsets.all(1.w),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEF4444),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0xFF714B67), width: 1.5),
+                                      ),
+                                      constraints: BoxConstraints(minWidth: 15.w, minHeight: 15.w),
+                                      child: Center(
+                                        child: Text(
+                                          unreadNotifCount > 9 ? '9+' : '$unreadNotifCount',
+                                          style: TextStyle(color: Colors.white, fontSize: 8.sp, fontWeight: FontWeight.bold, height: 1),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 8.w),
-
-                      // User Avatar on Right (tap to view profile)
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const MyProfileDetailScreen()),
-                          ).then((_) {
-                            ref.read(authNotifierProvider.notifier).refreshProfile();
-                          });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(2.w),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.8.w),
-                          ),
-                          child: Builder(
-                            builder: (context) {
-                              final userId = user?.id ?? hive.get<String>('user_id') ?? '';
-                              final savedPath = (userId.isNotEmpty)
-                                  ? hive.get<String>('user_profile_image_path_$userId')
-                                  : null;
-                              if (savedPath != null && File(savedPath).existsSync()) {
-                                return CircleAvatar(
-                                  radius: 20.r,
-                                  backgroundImage: FileImage(File(savedPath)),
-                                );
-                              } else if (user?.profilePhoto != null && user!.profilePhoto.isNotEmpty && user.profilePhoto.startsWith('http')) {
-                                return CircleAvatar(
-                                  radius: 20.r,
-                                  backgroundImage: NetworkImage(user.profilePhoto),
-                                );
-                              } else {
-                                final initial = displayName.trim().isNotEmpty ? displayName.trim()[0].toUpperCase() : 'U';
-                                return CircleAvatar(
-                                  radius: 20.r,
-                                  backgroundColor: Colors.white.withValues(alpha: 0.25),
-                                  child: Text(
-                                    initial,
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
+                        SizedBox(width: 8.w),
+                        // User avatar
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const MyProfileDetailScreen()),
+                            ).then((_) => ref.read(authNotifierProvider.notifier).refreshProfile());
+                          },
+                          child: Builder(builder: (ctx) {
+                            final userId = user?.id ?? hive.get<String>('user_id') ?? '';
+                            final savedPath = userId.isNotEmpty ? hive.get<String>('user_profile_image_path_$userId') : null;
+                            Widget av;
+                            if (savedPath != null && File(savedPath).existsSync()) {
+                              av = CircleAvatar(radius: 21.r, backgroundImage: FileImage(File(savedPath)));
+                            } else if (user?.profilePhoto != null && user!.profilePhoto.isNotEmpty && user.profilePhoto.startsWith('http')) {
+                              av = CircleAvatar(radius: 21.r, backgroundImage: NetworkImage(user.profilePhoto));
+                            } else {
+                              final init = displayName.trim().isNotEmpty ? displayName.trim()[0].toUpperCase() : 'U';
+                              av = CircleAvatar(
+                                radius: 21.r,
+                                backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                child: Text(init, style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+                              );
+                            }
+                            return Container(
+                              padding: EdgeInsets.all(2.w),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 2.w),
+                              ),
+                              child: av,
+                            );
+                          }),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  if (!isManager) ...[
-                    SizedBox(height: 14.h),
-                    Row(
+
+                  SizedBox(height: 20.h),
+
+                  // 3 metric chips
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Row(
                       children: [
-                        // Card 1: Today's Tasks
                         Expanded(
                           child: _buildHeaderMetricCard(
                             icon: Icons.task_alt_rounded,
                             value: '${assignedTasks.length}',
-                            label: "Today's Tasks",
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const TasksScreen()),
-                            ),
+                            label: 'Tasks',
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TasksScreen())),
                           ),
                         ),
-                        SizedBox(width: 8.w),
-
-                        // Card 2: Follow-Ups Due
+                        SizedBox(width: 10.w),
                         Expanded(
                           child: _buildHeaderMetricCard(
                             icon: Icons.event_repeat_rounded,
                             value: '$followUpsDueCount',
-                            label: 'Follow-Ups Due',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const FollowUpsScreen()),
-                            ),
+                            label: 'Follow-Ups',
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FollowUpsScreen())),
                           ),
                         ),
-                        SizedBox(width: 8.w),
-
-                        // Card 3: Active Leads
+                        SizedBox(width: 10.w),
                         Expanded(
                           child: _buildHeaderMetricCard(
                             icon: Icons.storefront_rounded,
                             value: '$totalLeadsCount',
-                            label: 'Active Leads',
+                            label: 'Leads',
                             onTap: () => setState(() => _navIndex = 1),
                           ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                  SizedBox(height: 20.h),
                 ],
               ),
             ),
 
-            // Content Section
+            // ── BODY ──
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 20.h),
 
-                  // Dynamic Role Command Center Banners (Strictly isolated by authenticated backend role)
+                  // Role banners
                   if (rawRole == 'SUPER_ADMIN' || activeRole == AppUserRole.superAdmin) ...[
-                    _buildSuperAdminBanner(context, isDark),
-                    SizedBox(height: 16.h),
+                    _buildSuperAdminBanner(context, isDark), SizedBox(height: 16.h),
                   ] else if (rawRole == 'COMPANY_ADMIN' || activeRole == AppUserRole.companyAdmin) ...[
-                    _buildCompanyAdminBanner(context, isDark),
-                    SizedBox(height: 16.h),
+                    _buildCompanyAdminBanner(context, isDark), SizedBox(height: 16.h),
                   ] else if (isManager) ...[
-                    _buildSalesManagerBanner(context, isDark),
-                    SizedBox(height: 16.h),
+                    _buildSalesManagerBanner(context, isDark), SizedBox(height: 16.h),
                   ],
 
-                  // Quick Power Actions Strip (1-Tap Fast Actions)
+                  // Quick Actions
                   _buildQuickPowerActionsStrip(context, isDark),
-                  SizedBox(height: 16.h),
-
-                  // Dedicated Sales Manager Assigned Tasks Section
-                  _buildAssignedTasksByManagerSection(context, isDark, assignedTasks),
-                  SizedBox(height: 16.h),
-
-                  // Dynamic Monthly Target & Implementation Progress Module (Live Database-Driven)
-                  _buildMonthlyTargetAndImplementationModule(context, isDark),
                   SizedBox(height: 18.h),
 
+                  // Manager tasks
+                  _buildAssignedTasksByManagerSection(context, isDark, assignedTasks),
+                  if (assignedTasks.isNotEmpty) SizedBox(height: 18.h),
 
+                  // Monthly Target gradient card
+                  _buildMonthlyTargetAndImplementationModule(context, isDark),
+                  SizedBox(height: 20.h),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Key Performance Metrics',
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                    ],
+                  // KPI Metrics
+                  Text(
+                    'Key Performance Metrics',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                    ),
                   ),
-                  SizedBox(height: 10.h),
-
-                  // Summary Grid
+                  SizedBox(height: 12.h),
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisCount: 2,
                     mainAxisSpacing: 12.h,
                     crossAxisSpacing: 12.w,
-                    childAspectRatio: 1.12,
+                    childAspectRatio: 1.35,
                     children: [
-                      _buildSummaryCard(
-                        'Visits Today',
-                        '${visitsAsync.value?.length ?? 0}',
-                        'Live Beat',
-                        Icons.location_on_rounded,
-                        const Color(0xFF6366F1),
-                        isDark,
-                        progress: 0.8,
-                        onTap: () => setState(() => _navIndex = 2),
-                      ),
-                      _buildSummaryCard(
-                        'Active Leads',
-                        '$totalLeadsCount',
-                        '+$newLeadsCount New',
-                        Icons.group_add_rounded,
-                        const Color(0xFFF59E0B),
-                        isDark,
-                        progress: 0.65,
-                        onTap: () => setState(() => _navIndex = 1),
-                      ),
-                      _buildSummaryCard(
-                        'Follow Ups',
-                        '$followUpsDueCount',
-                        '${followUpsState.todayCount} Due Today',
-                        Icons.access_time_filled_rounded,
-                        const Color(0xFF3B82F6),
-                        isDark,
-                        progress: 0.5,
-                        onTap: () => _showFollowUpsSheet(context, isDark),
-                      ),
-                      _buildSummaryCard(
-                        'Target Goal',
-                        '${myTargetAsync.value?.progressPercent ?? 0}%',
-                        'Target: ${myTargetAsync.value?.targetLeads ?? 0}',
-                        Icons.pie_chart_rounded,
-                        const Color(0xFF10B981),
-                        isDark,
-                        progress: ((myTargetAsync.value?.progressPercent ?? 0) / 100).clamp(0.0, 1.0),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MonthlyTargetImplementationScreen(initialTabIndex: 0),
-                            ),
-                          );
-                        },
-                      ),
+                      _buildKpiCard('Visits Today', '${visitsAsync.value?.length ?? 0}', 'Live Beat',
+                          Icons.location_on_rounded, const Color(0xFF6366F1), isDark,
+                          onTap: () => setState(() => _navIndex = 2)),
+                      _buildKpiCard('Active Leads', '$totalLeadsCount', '+$newLeadsCount New',
+                          Icons.group_add_rounded, const Color(0xFFF59E0B), isDark,
+                          onTap: () => setState(() => _navIndex = 1)),
+                      _buildKpiCard('Follow-Ups', '$followUpsDueCount', '${followUpsState.todayCount} Due Today',
+                          Icons.access_time_filled_rounded, const Color(0xFF3B82F6), isDark,
+                          onTap: () => _showFollowUpsSheet(context, isDark)),
+                      _buildKpiCard('Target Goal', '${myTargetAsync.value?.progressPercent ?? 0}%',
+                          'of ${myTargetAsync.value?.targetLeads ?? 0} Leads',
+                          Icons.pie_chart_rounded, const Color(0xFF10B981), isDark,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => const MonthlyTargetImplementationScreen(initialTabIndex: 0)))),
                     ],
                   ),
 
@@ -524,18 +447,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           const Icon(Icons.route_rounded, color: AppColors.primary, size: 18),
                           SizedBox(width: 6.w),
                           Text(
-                            'Today\'s Beat Schedule',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                            ),
+                            "Today's Beat Schedule",
+                            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : AppColors.textPrimaryLight),
                           ),
                         ],
                       ),
                       TextButton(
                         onPressed: () => setState(() => _navIndex = 2),
-                        child: const Text('View All'),
+                        child: Text('View All', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.primary)),
                       ),
                     ],
                   ),
@@ -545,37 +465,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       if (visits.isEmpty) {
                         return Container(
                           width: double.infinity,
-                          padding: EdgeInsets.all(20.w),
+                          padding: EdgeInsets.all(24.w),
                           decoration: BoxDecoration(
                             color: isDark ? AppColors.surfaceDark : Colors.white,
-                            borderRadius: BorderRadius.circular(16.r),
-                            border: Border.all(
-                              color: isDark ? AppColors.borderDark : const Color(0xFFEFF0F6),
-                            ),
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(color: isDark ? AppColors.borderDark : const Color(0xFFEFF0F6)),
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.event_available_rounded, size: 36.sp, color: Colors.grey[400]),
-                              SizedBox(height: 8.h),
-                              Text(
-                                'No scheduled beat visits for today',
-                                style: TextStyle(
-                                  fontSize: 13.5.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white70 : Colors.black87,
-                                ),
-                              ),
+                              Icon(Icons.event_available_rounded, size: 38.sp, color: Colors.grey[400]),
+                              SizedBox(height: 10.h),
+                              Text('No scheduled beat visits for today',
+                                  style: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.white70 : Colors.black87)),
                               SizedBox(height: 4.h),
-                              Text(
-                                'Use Start Visit or Near Cafes to record your client visits.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 11.5.sp, color: Colors.grey[500]),
-                              ),
+                              Text('Use Start Visit or Near Cafes to record your client visits.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 11.5.sp, color: Colors.grey[500])),
                             ],
                           ),
                         );
                       }
-
                       return Column(
                         children: visits.map((visit) {
                           final status = visit.status.isNotEmpty ? visit.status : 'Scheduled';
@@ -587,19 +497,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           } else if (status.toUpperCase().contains('CANCEL')) {
                             statusColor = const Color(0xFFEF4444);
                           }
-
                           final timeStr = visit.startTime.isNotEmpty ? visit.startTime : '10:00 AM';
-                          const phoneStr = '+91 98250 12345';
-
-                          return _buildScheduleItem(
-                            timeStr,
-                            visit.restaurantName,
-                            visit.address,
-                            phoneStr,
-                            status,
-                            statusColor,
-                            isDark,
-                          );
+                          return _buildScheduleItem(timeStr, visit.restaurantName, visit.address, '+91 98250 12345', status, statusColor, isDark);
                         }).toList(),
                       );
                     },
@@ -607,21 +506,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       padding: EdgeInsets.all(24.0),
                       child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
                     ),
-                    error: (_, __) => Column(
-                      children: [
-                        _buildScheduleItem(
-                          '10:00 AM',
-                          'Spice Junction Fine Dine',
-                          'Plot 42, Mg Road, Connaught Place',
-                          '+91 98250 12345',
-                          'Completed',
-                          const Color(0xFF10B981),
-                          isDark,
-                        ),
-                      ],
-                    ),
+                    error: (_, __) => Column(children: [
+                      _buildScheduleItem('10:00 AM', 'Spice Junction Fine Dine', 'Plot 42, Mg Road, Connaught Place',
+                          '+91 98250 12345', 'Completed', const Color(0xFF10B981), isDark),
+                    ]),
                   ),
-                  SizedBox(height: 30.h),
+                  SizedBox(height: 32.h),
                 ],
               ),
             ),
@@ -630,6 +520,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
     );
   }
+
 
   Widget _buildHeaderMetricCard({
     required IconData icon,
@@ -640,47 +531,143 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.18),
-            width: 1,
-          ),
+          color: Colors.white.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 16.sp, color: Colors.white.withValues(alpha: 0.9)),
-            SizedBox(height: 4.h),
+            Container(
+              padding: EdgeInsets.all(5.w),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 15.sp, color: Colors.white),
+            ),
+            SizedBox(height: 5.h),
             Text(
               value,
               maxLines: 1,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: -0.2,
+                letterSpacing: -0.3,
               ),
             ),
-            SizedBox(height: 1.h),
+            SizedBox(height: 2.h),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 10.sp,
+                fontSize: 9.5.sp,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withValues(alpha: 0.82),
+                color: Colors.white.withValues(alpha: 0.78),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Solid-colored KPI metric card (replaces old white summary cards)
+  Widget _buildKpiCard(
+    String label,
+    String count,
+    String badge,
+    IconData icon,
+    Color accentColor,
+    bool isDark, {
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20.r),
+      child: InkWell(
+        onTap: () { HapticFeedback.lightImpact(); onTap?.call(); },
+        borderRadius: BorderRadius.circular(20.r),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [accentColor, accentColor.withValues(alpha: 0.75)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20.r),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: isDark ? 0.35 : 0.28),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(14.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(6.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 16.sp),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Text(badge,
+                        style: TextStyle(fontSize: 8.5.sp, color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    count,
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
   }
 
   Widget _buildQuickPowerActionsStrip(BuildContext context, bool isDark) {
@@ -769,26 +756,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }) {
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16.r),
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
           onTap();
         },
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(16.r),
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 12.h),
+          padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 4.w),
           decoration: BoxDecoration(
             color: isDark ? AppColors.surfaceDark : Colors.white,
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: isDark ? AppColors.borderDark : const Color(0xFFE8EAF2),
+              color: isDark ? AppColors.borderDark : accentColor.withValues(alpha: 0.12),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.03),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: accentColor.withValues(alpha: isDark ? 0.1 : 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -796,18 +784,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: EdgeInsets.all(8.w),
+                padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [accentColor, accentColor.withValues(alpha: 0.75)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: accentColor, size: 18.sp),
+                child: Icon(icon, color: Colors.white, size: 20.sp),
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: 8.h),
               Text(
                 label,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 11.5.sp,
+                  fontSize: 11.sp,
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : const Color(0xFF1E293B),
                 ),
@@ -1157,182 +1157,169 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
  
     return targetAsync.when(
       data: (target) {
-        return Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDark : Colors.white,
-            borderRadius: BorderRadius.circular(22.r),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : const Color(0xFFEFF0F6),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+        final progress = (target.progressPercent / 100).clamp(0.0, 1.0);
+        return Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(24.r),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24.r),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MonthlyTargetImplementationScreen()),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.4 : 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(22.r),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(22.r),
-              onTap: () {
-                HapticFeedback.lightImpact();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MonthlyTargetImplementationScreen()),
-                );
-              },
               child: Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(18.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header with Month Name and "View Details"
+                    // Header row
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        Container(
+                          padding: EdgeInsets.all(8.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(Icons.track_changes_rounded, color: Colors.white, size: 20.sp),
+                        ),
+                        SizedBox(width: 10.w),
                         Expanded(
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: EdgeInsets.all(8.w),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10.r),
+                              Text(
+                                '${target.monthName} ${target.year} Target',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
-                                child: const Icon(Icons.track_changes_rounded, color: Color(0xFF10B981), size: 20),
                               ),
-                              SizedBox(width: 10.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '${target.monthName} ${target.year} Target',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Assigned by: ${target.assignedByName}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
-                                    ),
-                                  ],
-                                ),
+                              Text(
+                                'Assigned by: ${target.assignedByName}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 11.sp, color: Colors.white.withValues(alpha: 0.75)),
                               ),
                             ],
                           ),
                         ),
-                        SizedBox(width: 8.w),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10.r),
+                        Icon(Icons.arrow_forward_ios_rounded, color: Colors.white.withValues(alpha: 0.7), size: 14.sp),
+                      ],
+                    ),
+
+                    SizedBox(height: 16.h),
+
+                    // Large percentage display
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${target.progressPercent}%',
+                          style: TextStyle(
+                            fontSize: 40.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: -1.5,
+                            height: 1,
                           ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 5.h),
                           child: Text(
-                            '${target.progressPercent}%',
+                            'achieved',
                             style: TextStyle(
                               fontSize: 13.sp,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF10B981),
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ],
                     ),
- 
-                    SizedBox(height: 14.h),
- 
-                    // Progress Bar
+
+                    SizedBox(height: 12.h),
+
+                    // Progress bar
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6.r),
                       child: LinearProgressIndicator(
-                        value: (target.progressPercent / 100).clamp(0.0, 1.0),
-                        backgroundColor: isDark ? Colors.white10 : Colors.grey[200],
-                        color: const Color(0xFF10B981),
-                        minHeight: 8.h,
+                        value: progress,
+                        backgroundColor: Colors.white.withValues(alpha: 0.25),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        minHeight: 7.h,
                       ),
                     ),
- 
-                    SizedBox(height: 12.h),
- 
-                    // Target Stats Strip (Clean 3-column Layout without icons)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                'Target',
-                                style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF475569)),
-                              ),
-                              SizedBox(height: 3.h),
-                              Text(
-                                '${target.targetLeads}',
-                                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A)),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'Leads Assigned',
-                                style: TextStyle(fontSize: 9.5.sp, color: Colors.grey[500]),
-                              ),
-                            ],
+
+                    SizedBox(height: 14.h),
+
+                    // Stats strip
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text('${target.targetLeads}',
+                                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5)),
+                                SizedBox(height: 2.h),
+                                Text('Target', style: TextStyle(fontSize: 10.sp, color: Colors.white.withValues(alpha: 0.75), fontWeight: FontWeight.w500)),
+                              ],
+                            ),
                           ),
-                        ),
-                        Container(width: 1, height: 32.h, color: isDark ? Colors.white24 : Colors.grey[300]),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                'Completed',
-                                style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF475569)),
-                              ),
-                              SizedBox(height: 3.h),
-                              Text(
-                                '${target.completedLeads}',
-                                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: const Color(0xFF10B981)),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'Leads Closed',
-                                style: TextStyle(fontSize: 9.5.sp, color: Colors.grey[500]),
-                              ),
-                            ],
+                          Container(width: 1, height: 28.h, color: Colors.white.withValues(alpha: 0.25)),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text('${target.completedLeads}',
+                                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5)),
+                                SizedBox(height: 2.h),
+                                Text('Completed', style: TextStyle(fontSize: 10.sp, color: Colors.white.withValues(alpha: 0.75), fontWeight: FontWeight.w500)),
+                              ],
+                            ),
                           ),
-                        ),
-                        Container(width: 1, height: 32.h, color: isDark ? Colors.white24 : Colors.grey[300]),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                'Remaining',
-                                style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF475569)),
-                              ),
-                              SizedBox(height: 3.h),
-                              Text(
-                                '${target.remainingLeads}',
-                                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: const Color(0xFFF59E0B)),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'To Reach 100%',
-                                style: TextStyle(fontSize: 9.5.sp, color: Colors.grey[500]),
-                              ),
-                            ],
+                          Container(width: 1, height: 28.h, color: Colors.white.withValues(alpha: 0.25)),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text('${target.remainingLeads}',
+                                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5)),
+                                SizedBox(height: 2.h),
+                                Text('Remaining', style: TextStyle(fontSize: 10.sp, color: Colors.white.withValues(alpha: 0.75), fontWeight: FontWeight.w500)),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -1347,134 +1334,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
 
-
-  Widget _buildSummaryCard(
-    String label,
-    String count,
-    String badgeText,
-    IconData icon,
-    Color accentColor,
-    bool isDark, {
-    double progress = 0.7,
-    VoidCallback? onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : const Color(0xFFEFF0F6),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(18.r),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18.r),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            onTap?.call();
-          },
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(6.w),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            accentColor.withValues(alpha: 0.22),
-                            accentColor.withValues(alpha: 0.08),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Icon(icon, color: accentColor, size: 16.sp),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        badgeText,
-                        style: TextStyle(
-                          fontSize: 9.sp,
-                          color: accentColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          count,
-                          style: TextStyle(
-                            fontSize: 19.sp,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 10.sp,
-                          color: Colors.grey.shade400,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 1.h),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 5.h),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4.r),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 3.h,
-                        backgroundColor: Colors.grey.withValues(alpha: 0.15),
-                        valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0);
-  }
 
   void _showFollowUpsSheet(BuildContext context, bool isDark) {
     final followUpsState = ref.read(followUpsProvider);
