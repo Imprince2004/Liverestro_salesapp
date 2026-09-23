@@ -46,20 +46,38 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF4F6F9),
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF714B67), Color(0xFF9D6A8D)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          'POS Software Clients',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 17.sp,
-          ),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'POS Software Clients',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 17.sp,
+              ),
+            ),
+            Text(
+              'LiveRestro POS Network',
+              style: TextStyle(color: Colors.white70, fontSize: 10.sp, fontWeight: FontWeight.w400),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -304,88 +322,70 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
     required int paid,
     required double revenue,
   }) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildStatCard('Total Clients', '$total', Icons.storefront_rounded, const Color(0xFF714B67), isDark)),
+            SizedBox(width: 10.w),
+            Expanded(child: _buildStatCard('Free POS', '$free', Icons.check_circle_outline_rounded, const Color(0xFF10B981), isDark)),
+          ],
+        ),
+        SizedBox(height: 10.h),
+        Row(
+          children: [
+            Expanded(child: _buildStatCard('Paid POS', '$paid', Icons.monetization_on_rounded, const Color(0xFFF97316), isDark)),
+            SizedBox(width: 10.w),
+            Expanded(child: _buildStatCard('Revenue', currencyFormatter.format(revenue), Icons.account_balance_wallet_rounded, const Color(0xFF3B82F6), isDark)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color, bool isDark) {
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        gradient: LinearGradient(
+          colors: [color, color.withValues(alpha: 0.75)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: color.withValues(alpha: isDark ? 0.3 : 0.22),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricTile(
-                  title: 'Total Clients',
-                  value: '$total',
-                  icon: Icons.storefront_rounded,
-                  color: AppColors.primary,
-                  isDark: isDark,
-                ),
-              ),
-              Container(height: 40.h, width: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-              Expanded(
-                child: _buildMetricTile(
-                  title: 'Free Software',
-                  value: '$free',
-                  icon: Icons.check_circle_outline_rounded,
-                  color: const Color(0xFF10B981),
-                  isDark: isDark,
-                ),
-              ),
-              Container(height: 40.h, width: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-              Expanded(
-                child: _buildMetricTile(
-                  title: 'Paid Software',
-                  value: '$paid',
-                  icon: Icons.monetization_on_rounded,
-                  color: const Color(0xFFF97316),
-                  isDark: isDark,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+            padding: EdgeInsets.all(7.w),
             decoration: BoxDecoration(
-              color: const Color(0xFFF97316).withValues(alpha: isDark ? 0.15 : 0.08),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10.r),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Icon(icon, color: Colors.white, size: 16.sp),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.account_balance_wallet_rounded, color: const Color(0xFFF97316), size: 16.sp),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'Total POS Software Revenue',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : const Color(0xFF334155),
-                      ),
-                    ),
-                  ],
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.4),
                 ),
                 Text(
-                  currencyFormatter.format(revenue),
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFF97316),
-                  ),
+                  label,
+                  style: TextStyle(fontSize: 10.sp, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -395,35 +395,7 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
     );
   }
 
-  Widget _buildMetricTile({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 18.sp),
-        SizedBox(height: 4.h),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF1E293B),
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 10.5.sp,
-            color: isDark ? Colors.white54 : Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildSearchBarAndFilter(bool isDark) {
     return Column(
@@ -514,251 +486,282 @@ class _PosSoftwareOrdersScreenState extends ConsumerState<PosSoftwareOrdersScree
   }
 
   Widget _buildClientOrderCard(BuildContext context, PosSoftwareOrderModel order, ImplementationModel? match, bool isDark) {
+    final accentColor = order.isPaid ? const Color(0xFFF97316) : const Color(0xFF10B981);
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.only(bottom: 14.h),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(18.r),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE8EDF4),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Restaurant Name + Lead ID & Status Badges
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18.r),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Left accent bar
+              Container(width: 4.w, color: accentColor),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order.restaurantName,
-                      style: TextStyle(
-                        fontSize: 15.5.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                          child: Text(
-                            order.leadId.isNotEmpty ? order.leadId : order.id,
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 12.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Restaurant Name + Lead ID & Status Badges
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  order.restaurantName,
+                                  style: TextStyle(
+                                    fontSize: 15.5.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(6.r),
+                                      ),
+                                      child: Text(
+                                        order.leadId.isNotEmpty ? order.leadId : order.id,
+                                        style: TextStyle(
+                                          fontSize: 9.5.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Icon(Icons.location_on_outlined, size: 12.sp, color: Colors.grey),
+                                    SizedBox(width: 2.w),
+                                    Expanded(
+                                      child: Text(
+                                        order.location.isNotEmpty ? order.location : 'Ahmedabad',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Icon(Icons.location_on_outlined, size: 12.sp, color: Colors.grey),
-                        SizedBox(width: 2.w),
-                        Expanded(
-                          child: Text(
-                            order.location.isNotEmpty ? order.location : 'Ahmedabad',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // POS Status Badge
-              _buildPosStatusBadge(order, isDark),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
-          SizedBox(height: 10.h),
+                          // POS Status Badge
+                          _buildPosStatusBadge(order, isDark),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                      SizedBox(height: 10.h),
 
-          // Contact Person & Phone
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.person_rounded, size: 13.sp, color: AppColors.primary),
-                        SizedBox(width: 4.w),
-                        Text(
-                          order.contactPerson.isNotEmpty ? order.contactPerson : 'Manager / Owner',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : const Color(0xFF334155),
+                      // Contact Person & Phone
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.person_rounded, size: 13.sp, color: AppColors.primary),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      order.contactPerson.isNotEmpty ? order.contactPerson : 'Manager / Owner',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (order.contactPhone.isNotEmpty) ...[
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    order.contactPhone,
+                                    style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (order.contactPhone.isNotEmpty) ...[
+                            GestureDetector(
+                              onTap: () => launchUrl(Uri.parse('tel:${order.contactPhone}')),
+                              child: Container(
+                                padding: EdgeInsets.all(7.w),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                                ),
+                                child: Icon(Icons.call_rounded, color: const Color(0xFF10B981), size: 16.sp),
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            GestureDetector(
+                              onTap: () => launchUrl(Uri.parse('https://wa.me/91${order.contactPhone.replaceAll(RegExp(r'[^0-9]'), '')}')),
+                              child: Container(
+                                padding: EdgeInsets.all(7.w),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF25D366).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.3)),
+                                ),
+                                child: Icon(Icons.chat_bubble_rounded, color: const Color(0xFF25D366), size: 16.sp),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      SizedBox(height: 10.h),
+
+                      // Team Section: Executive & Manager
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                           ),
                         ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.badge_rounded, size: 12.sp, color: Colors.blueAccent),
+                                SizedBox(width: 6.w),
+                                Text(
+                                  'Executive: ',
+                                  style: TextStyle(fontSize: 11.sp, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    order.assignedExecutiveName.isNotEmpty ? order.assignedExecutiveName : 'Not Assigned',
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.white70 : const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4.h),
+                            Row(
+                              children: [
+                                Icon(Icons.admin_panel_settings_rounded, size: 12.sp, color: Colors.purpleAccent),
+                                SizedBox(width: 6.w),
+                                Text(
+                                  'Manager: ',
+                                  style: TextStyle(fontSize: 11.sp, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    order.assignedManagerName.isNotEmpty ? order.assignedManagerName : 'Not Assigned',
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.white70 : const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (match != null) ...[
+                        _buildImplementationTimeline(context, order, match, isDark),
                       ],
-                    ),
-                    if (order.contactPhone.isNotEmpty) ...[
-                      SizedBox(height: 2.h),
-                      Text(
-                        order.contactPhone,
-                        style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
+                      SizedBox(height: 10.h),
+
+                      // Action Buttons Row
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8.w,
+                        runSpacing: 6.h,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MonthlyTargetImplementationScreen(initialTabIndex: 1),
+                                ),
+                              );
+                            },
+                            icon: Icon(Icons.alt_route_rounded, size: 14.sp, color: const Color(0xFFF97316)),
+                            label: Text(
+                              'Implementation Status',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFF97316),
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                              backgroundColor: const Color(0xFFF97316).withValues(alpha: 0.08),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _showEditPosStatusModal(context, order, isDark),
+                            icon: Icon(Icons.edit_note_rounded, size: 15.sp, color: AppColors.primary),
+                            label: Text(
+                              'Edit / Upgrade POS Status',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                              backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ],
-                ),
-              ),
-              if (order.contactPhone.isNotEmpty) ...[
-                IconButton(
-                  icon: Icon(Icons.call_rounded, color: const Color(0xFF10B981), size: 18.sp),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.all(6.w),
-                  onPressed: () => launchUrl(Uri.parse('tel:${order.contactPhone}')),
-                ),
-                SizedBox(width: 4.w),
-                IconButton(
-                  icon: Icon(Icons.chat_bubble_rounded, color: const Color(0xFF25D366), size: 18.sp),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.all(6.w),
-                  onPressed: () => launchUrl(Uri.parse('https://wa.me/91${order.contactPhone.replaceAll(RegExp(r'[^0-9]'), '')}')),
-                ),
-              ],
-            ],
-          ),
-          SizedBox(height: 8.h),
-
-          // Team Section: Executive & Manager
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.badge_rounded, size: 12.sp, color: Colors.blueAccent),
-                    SizedBox(width: 6.w),
-                    Text(
-                      'Executive: ',
-                      style: TextStyle(fontSize: 11.sp, color: Colors.grey[500], fontWeight: FontWeight.w500),
-                    ),
-                    Expanded(
-                      child: Text(
-                        order.assignedExecutiveName.isNotEmpty ? order.assignedExecutiveName : 'Not Assigned',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white70 : const Color(0xFF1E293B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Row(
-                  children: [
-                    Icon(Icons.admin_panel_settings_rounded, size: 12.sp, color: Colors.purpleAccent),
-                    SizedBox(width: 6.w),
-                    Text(
-                      'Manager: ',
-                      style: TextStyle(fontSize: 11.sp, color: Colors.grey[500], fontWeight: FontWeight.w500),
-                    ),
-                    Expanded(
-                      child: Text(
-                        order.assignedManagerName.isNotEmpty ? order.assignedManagerName : 'Not Assigned',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white70 : const Color(0xFF1E293B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (match != null) ...[
-            _buildImplementationTimeline(context, order, match, isDark),
-          ],
-          SizedBox(height: 10.h),
-
-          // Implementation Status & Edit / Upgrade POS Status Action Buttons Row
-          Wrap(
-            alignment: WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8.w,
-            runSpacing: 6.h,
-            children: [
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const MonthlyTargetImplementationScreen(initialTabIndex: 1),
-                    ),
-                  );
-                },
-                icon: Icon(Icons.alt_route_rounded, size: 14.sp, color: const Color(0xFFF97316)),
-                label: Text(
-                  'Implementation Status',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFF97316),
                   ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  backgroundColor: const Color(0xFFF97316).withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
-              TextButton.icon(
-                onPressed: () => _showEditPosStatusModal(context, order, isDark),
-                icon: Icon(Icons.edit_note_rounded, size: 15.sp, color: AppColors.primary),
-                label: Text(
-                  'Edit / Upgrade POS Status',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                  visualDensity: VisualDensity.compact,
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
+
 
   Widget _buildImplementationTimeline(BuildContext context, PosSoftwareOrderModel order, ImplementationModel match, bool isDark) {
     final isExpanded = _expandedOrders[order.id] ?? false;
