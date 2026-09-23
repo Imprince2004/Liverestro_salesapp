@@ -8,7 +8,7 @@ import '../../../../routes/route_names.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../auth/presentation/providers/auth_state.dart';
 
-/// Ultra-Premium Splash Screen with luxury F&B SaaS branding and micro-animations.
+/// LiveRestro Splash Screen — modern, brand-accurate, clean.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -81,7 +81,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     return Scaffold(
       body: Stack(
         children: [
-          // Background Luxury Multi-Stop Mesh Gradient with #714B67
+          // ── Deep plum gradient background ──────────────────────────
           Container(
             width: double.infinity,
             height: double.infinity,
@@ -90,201 +90,160 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF43253D), // Deep rich plum base
-                  Color(0xFF714B67), // Requested Primary Hero Brand Color #714B67
-                  Color(0xFF8C5C80), // Soft rose plum tint
-                  Color(0xFF714B67), // Requested Primary Hero Brand Color #714B67
-                  Color(0xFF381C33), // Deep plum shadow
+                  Color(0xFF2D1527), // Very deep plum
+                  Color(0xFF4A2942), // Mid-dark plum
+                  Color(0xFF714B67), // Brand primary
+                  Color(0xFF4A2942), // Back to mid-dark
+                  Color(0xFF1E0E1A), // Near-black bottom
                 ],
-                stops: [0.0, 0.28, 0.58, 0.85, 1.0],
+                stops: [0.0, 0.25, 0.55, 0.80, 1.0],
               ),
             ),
           ),
 
-          // Ambient Glow Overlays
+          // ── Ambient glow: top-right amber orb ─────────────────────
           Positioned(
-            top: -60.h,
-            right: -60.w,
+            top: -80.h,
+            right: -80.w,
             child: Container(
-              width: 240.w,
-              height: 240.w,
+              width: 260.w,
+              height: 260.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                color: Colors.transparent,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                    blurRadius: 100,
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                    blurRadius: 130,
+                    spreadRadius: 40,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Ambient glow: bottom-left indigo orb ─────────────────
+          Positioned(
+            bottom: 60.h,
+            left: -70.w,
+            child: Container(
+              width: 220.w,
+              height: 220.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.18),
+                    blurRadius: 110,
                     spreadRadius: 30,
                   ),
                 ],
               ),
             ),
           ),
-          Positioned(
-            bottom: 80.h,
-            left: -50.w,
-            child: Container(
-              width: 200.w,
-              height: 200.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF6366F1).withValues(alpha: 0.15),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF6366F1).withValues(alpha: 0.25),
-                    blurRadius: 90,
-                    spreadRadius: 20,
-                  ),
-                ],
-              ),
-            ),
+
+          // ── Subtle dot-grid texture overlay ──────────────────────
+          Positioned.fill(
+            child: CustomPaint(painter: _DotGridPainter()),
           ),
 
-          // Main Center Content
+          // ── Main content ──────────────────────────────────────────
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 28.w),
+              padding: EdgeInsets.symmetric(horizontal: 32.w),
               child: Column(
                 children: [
-                  const Spacer(flex: 3),
+                  const Spacer(flex: 4),
 
-                  // Glowing Cloche Emblem
+                  // Logo card — frosted glass container with the official logo
                   Container(
-                    width: 110.w,
-                    height: 110.w,
+                    padding: EdgeInsets.symmetric(horizontal: 28.w, vertical: 20.h),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.22),
-                          Colors.white.withValues(alpha: 0.05),
-                        ],
-                      ),
+                      color: Colors.white.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(24.r),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        width: 1.5,
+                        color: Colors.white.withValues(alpha: 0.14),
+                        width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
+                          blurRadius: 32,
+                          offset: const Offset(0, 12),
                         ),
                         BoxShadow(
-                          color: const Color(0xFFFDE047).withValues(alpha: 0.2),
-                          blurRadius: 30,
-                          spreadRadius: 2,
+                          color: const Color(0xFFFDE047).withValues(alpha: 0.06),
+                          blurRadius: 40,
+                          spreadRadius: 4,
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Icon(
-                        Icons.room_service_rounded,
-                        size: 58.sp,
-                        color: Colors.white,
-                      ),
+                    child: Image.asset(
+                      'assets/images/liverestro_logo.png',
+                      width: 200.w,
+                      fit: BoxFit.contain,
+                      color: Colors.white,             // renders the plum logo in white
+                      colorBlendMode: BlendMode.srcIn,
                     ),
                   )
-                      .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                      .scale(
-                        begin: const Offset(0.96, 0.96),
-                        end: const Offset(1.04, 1.04),
-                        duration: 1800.ms,
-                        curve: Curves.easeInOut,
-                      )
                       .animate()
                       .fadeIn(duration: 600.ms)
-                      .slideY(begin: 0.2, end: 0),
+                      .slideY(begin: 0.15, end: 0, curve: Curves.easeOut),
 
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 32.h),
 
-                  // Brand Typography
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Live',
-                        style: TextStyle(
-                          fontSize: 40.sp,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      Text(
-                        'Restro',
-                        style: TextStyle(
-                          fontSize: 40.sp,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFFFDE047), // Gold accent
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  )
-                      .animate()
-                      .fadeIn(delay: 200.ms, duration: 600.ms)
-                      .slideY(begin: 0.2, end: 0),
-
-                  SizedBox(height: 4.h),
-
-                  // Subtitle Badge Strip
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  // ── Tagline ───────────────────────────────────────
+                  Text(
+                    'S A L E S   C R M',
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFFDE047),
+                      letterSpacing: 5.0,
                     ),
-                    child: Text(
-                      'S A L E S   C R M',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white.withValues(alpha: 0.95),
-                        letterSpacing: 4.0,
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 400.ms, duration: 500.ms),
+                  ).animate().fadeIn(delay: 200.ms, duration: 500.ms),
 
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 10.h),
 
                   Text(
-                    'Next-Gen Operating System for Restaurants',
+                    'Next-Gen Operating System\nfor Restaurants',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12.5.sp,
-                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 13.sp,
+                      color: Colors.white.withValues(alpha: 0.65),
                       fontWeight: FontWeight.w400,
+                      height: 1.55,
                     ),
-                  ).animate().fadeIn(delay: 550.ms),
+                  ).animate().fadeIn(delay: 350.ms, duration: 500.ms),
 
-                  const Spacer(flex: 2),
+                  const Spacer(flex: 3),
 
-                  // Dynamic Loading Wave & Status Pill
+                  // ── Loading section ──────────────────────────────
                   Column(
                     children: [
+                      // Status pill
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 7.h),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.14),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             SizedBox(
-                              width: 12.w,
-                              height: 12.w,
+                              width: 11.w,
+                              height: 11.w,
                               child: const CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFDE047)),
                               ),
                             ),
-                            SizedBox(width: 8.w),
+                            SizedBox(width: 9.w),
                             AnimatedSwitcher(
                               duration: const Duration(milliseconds: 300),
                               child: Text(
@@ -292,7 +251,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                                 key: ValueKey(_statusMessage),
                                 style: TextStyle(
                                   fontSize: 11.sp,
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: Colors.white.withValues(alpha: 0.88),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -300,11 +259,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                           ],
                         ),
                       ),
-                      SizedBox(height: 12.h),
 
-                      // Progress Track
+                      SizedBox(height: 14.h),
+
+                      // Progress bar — pill shaped, yellow fill
                       SizedBox(
-                        width: 180.w,
+                        width: 160.w,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8.r),
                           child: TweenAnimationBuilder<double>(
@@ -314,7 +274,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                             builder: (context, value, _) => LinearProgressIndicator(
                               value: value,
                               minHeight: 4.h,
-                              backgroundColor: Colors.white.withValues(alpha: 0.15),
+                              backgroundColor: Colors.white.withValues(alpha: 0.14),
                               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFDE047)),
                             ),
                           ),
@@ -325,31 +285,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
                   const Spacer(flex: 1),
 
-                  // Premium Tagline Footer
+                  // ── Footer ────────────────────────────────────────
                   Column(
                     children: [
                       Text(
                         'Simplify Restaurant Business',
                         style: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 13.sp,
+                          color: Colors.white.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.3,
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 5.h),
                       Text(
-                        'Empowering 10,000+ Food Outlets across India • v2.5 Enterprise',
+                        'Trusted by 10,000+ Food Outlets across India  •  v2.5',
                         style: TextStyle(
-                          fontSize: 10.sp,
-                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: 9.5.sp,
+                          color: Colors.white.withValues(alpha: 0.4),
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
                   ).animate().fadeIn(delay: 800.ms),
 
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 28.h),
                 ],
               ),
             ),
@@ -360,3 +320,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   }
 }
 
+/// Subtle dot-grid texture painter — low-alpha, adds depth without noise.
+class _DotGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.03)
+      ..style = PaintingStyle.fill;
+
+    const spacing = 28.0;
+    const radius = 1.0;
+
+    for (double x = spacing / 2; x < size.width; x += spacing) {
+      for (double y = spacing / 2; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
